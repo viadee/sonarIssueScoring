@@ -1,0 +1,18 @@
+{
+  "key": "key1",
+  "issueDesirability": {
+    "ratings": [
+      {
+        "type": "Severity",
+        "rating": 2.0,
+        "reason": "Reason"
+      },
+      {
+        "type": "Age",
+        "rating": 1.0,
+        "reason": null
+      }
+    ],
+    "desirabilityScore": 4.0
+  }
+}
