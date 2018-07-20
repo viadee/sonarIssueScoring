@@ -1,5 +1,15 @@
 package de.viadee.sonarIssueScoring.service.prediction.extract;
 
+import static com.google.common.base.Preconditions.*;
+
+import java.io.PrintStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Map;
+import java.util.Set;
+
+import org.springframework.stereotype.Component;
+
 import com.github.mauricioaniche.ck.CK;
 import com.github.mauricioaniche.ck.CKNumber;
 import com.github.mauricioaniche.ck.CKReport;
@@ -12,17 +22,9 @@ import com.google.common.graph.Graph;
 import com.google.common.graph.GraphBuilder;
 import com.google.common.graph.ImmutableGraph;
 import com.google.common.graph.MutableGraph;
+
 import de.viadee.sonarIssueScoring.service.prediction.load.Repo;
 import de.viadee.sonarIssueScoring.service.prediction.train.Instance.Builder;
-import org.springframework.stereotype.Component;
-
-import java.io.PrintStream;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Map;
-import java.util.Set;
-
-import static com.google.common.base.Preconditions.*;
 
 /**
  * Extracts some features related to CK-Metrics out of the files, by parsing their content.
@@ -33,10 +35,14 @@ public class MetricExtractor implements FeatureExtractor {
 
     static {
         System.setProperty("jdt.max", "100");
-        //Silence CBO Line 172
+
+        //This new PrintStream is here to silence System.out.println in CBO.java on line 172
+
+        @SuppressWarnings("squid:S106")
         PrintStream original = System.out;
         System.setOut(new PrintStream(original) {
-            @Override public void println(Object x) {
+            @Override
+            public void println(Object x) {
                 //noinspection ThrowableNotThrown
                 if (!new Exception().getStackTrace()[1].getClassName().equals(CBO.class.getName()))
                     super.println(x);
@@ -44,7 +50,8 @@ public class MetricExtractor implements FeatureExtractor {
         });
     }
 
-    @Override public void extractFeatures(Repo repo, Map<Path, Builder> output) {
+    @Override
+    public void extractFeatures(Repo repo, Map<Path, Builder> output) {
         try (TempSourceFolder dir = new TempSourceFolder(repo.snapshot().getAllFiles())) {
 
             SetMultimap<String, String> dependencies = HashMultimap.create();
@@ -102,7 +109,9 @@ public class MetricExtractor implements FeatureExtractor {
 
         MutableGraph<Path> dependencies = GraphBuilder.<Path>directed().allowsSelfLoops(true).build();
         classNameDependencies.forEach((from, to) -> {
-            Set<Path> fromPaths = classNameToPaths.get(from), toPaths = classNameToPaths.get(to);
+            Set<Path> fromPaths = classNameToPaths.get(from);
+            Set<Path> toPaths = classNameToPaths.get(to);
+
             checkState(!fromPaths.isEmpty());
             if (toPaths.isEmpty())
                 toPaths.add(DEPENDENCY_NOT_RESOLVED.resolve(to)); //Dependency to an external class (such as java.lang). Add a virtual file for it to count in statistics

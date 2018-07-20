@@ -27,14 +27,18 @@ class TreeFilterSource {
         private static final byte[] PACKAGE_INFO = Constants.encode("package-info.java");
         private static final byte[] MODULE_INFO = Constants.encode("module-info.java");
 
-        @Override public boolean include(TreeWalk walker) {
+        @Override
+        public boolean include(TreeWalk walker) {
             return !walker.isPathSuffix(TEST, TEST.length) && !walker.isPathSuffix(PACKAGE_INFO, PACKAGE_INFO.length) && !walker.isPathSuffix(MODULE_INFO,
                     MODULE_INFO.length);
         }
 
-        @Override public boolean shouldBeRecursive() { return true;}
+        @Override
+        public boolean shouldBeRecursive() { return true;}
 
-        //This is not an actual clone method, just named as such
-        @SuppressWarnings({"CloneInNonCloneableClass", "UseOfClone"}) @Override public TreeFilter clone() { return this;}
+        //This is not an actual clone method, just named as such by the implemented interface
+        @SuppressWarnings({"CloneInNonCloneableClass", "UseOfClone","squid:S1182"})
+        @Override
+        public TreeFilter clone() { return this;}
     }
 }

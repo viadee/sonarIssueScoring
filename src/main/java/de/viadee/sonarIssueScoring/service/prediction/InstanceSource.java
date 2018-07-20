@@ -35,7 +35,7 @@ public class InstanceSource {
         return output;
     }
 
-    private static List<Instance> finalize(ImmutableMap<Path, Builder> builders) {
+    private static List<Instance> finalizeInstances(ImmutableMap<Path, Builder> builders) {
         return builders.values().stream().map(Builder::build).collect(ImmutableList.toImmutableList());
     }
 
@@ -43,14 +43,14 @@ public class InstanceSource {
     public List<Instance> extractInstances(Repo past) {
         ImmutableMap<Path, Builder> builders = createBuilders(past);
         targetExtractor.fillDummyTargetValues(builders);
-        return finalize(builders);
+        return finalizeInstances(builders);
     }
 
     public List<Instance> extractInstances(List<PastFuturePair> pastFuturePair) {
         return pastFuturePair.stream().flatMap(pair -> {
             ImmutableMap<Path, Builder> output = createBuilders(pair.past());
             targetExtractor.extractTargetVariable(pair.future(), output);
-            return finalize(output).stream();
+            return finalizeInstances(output).stream();
         }).collect(ImmutableList.toImmutableList());
     }
 }

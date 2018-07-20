@@ -1,5 +1,18 @@
 package de.viadee.sonarIssueScoring.service.prediction.train;
 
+import static com.google.common.base.Preconditions.*;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.StreamSupport;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -11,6 +24,8 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Uninterruptibles;
+
 import de.viadee.sonarIssueScoring.service.prediction.ModelMetrics;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -18,8 +33,6 @@ import okhttp3.MultipartBody.Builder;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import water.bindings.H2oApi;
 import water.bindings.pojos.ApiParseTypeValuesProvider;
 import water.bindings.pojos.FrameKeyV3;
@@ -27,15 +40,6 @@ import water.bindings.pojos.LeaderboardV99;
 import water.bindings.pojos.ModelKeyV3;
 import water.bindings.pojos.ModelMetricsListSchemaV3;
 import water.bindings.pojos.ParseV3;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.StreamSupport;
-
-import static com.google.common.base.Preconditions.*;
 
 /**
  * Wraps the api to H2O, extending it with unsupported features around AutoML
@@ -173,9 +177,7 @@ class ExtendedH2oApi {
 
         JsonNode response;
         do {
-            try {  //noinspection BusyWait
-                Thread.sleep(1000L);
-            } catch (InterruptedException ignored) { }
+            Uninterruptibles.sleepUninterruptibly(1000, TimeUnit.MILLISECONDS);
 
             response = execute(new Request.Builder().url(h2oUrl + "/3/Jobs/" + jobId).get().build());
         } while (response.get("jobs").get(0).get("status").asText().equals("RUNNING"));

@@ -214,5 +214,7 @@ class DependencyVisitor extends ASTVisitor implements Metric {
     }
 
     @Override
-    public void setResult(CKNumber result) {}
+    public void setResult(CKNumber result) {
+        //No output to report
+    }
 }

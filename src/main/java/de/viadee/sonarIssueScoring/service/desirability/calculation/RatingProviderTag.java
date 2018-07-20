@@ -12,7 +12,8 @@ import java.nio.file.Path;
 import java.util.function.Predicate;
 
 public class RatingProviderTag implements RatingProvider {
-    private final Rating ratingFound, ratingNotFound;
+    private final Rating ratingFound;
+    private final Rating ratingNotFound;
     private final Predicate<String> tagApplies;
 
     public RatingProviderTag(Predicate<String> tagApplies, double ratingIfFound, RatingType ratingType) {

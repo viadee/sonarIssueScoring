@@ -1,16 +1,17 @@
 package de.viadee.sonarIssueScoring.web;
 
+import java.util.Map;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import de.viadee.sonarIssueScoring.service.desirability.DesirabilitySource;
 import de.viadee.sonarIssueScoring.service.desirability.IssueDesirability;
 import de.viadee.sonarIssueScoring.service.desirability.UserPreferences;
 import de.viadee.sonarIssueScoring.service.misc.ParallelismManager;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("issues")
@@ -24,9 +25,8 @@ public class IssueController {
     }
 
     //Maps issue key to desirability
-    @RequestMapping(path = "desirability", method = RequestMethod.POST) public ResponseEntity<Map<String, IssueDesirability>> desirability(
-            @RequestBody UserPreferences preferences) {
-
+    @PostMapping(path = "desirability")
+    public ResponseEntity<Map<String, IssueDesirability>> desirability(@RequestBody UserPreferences preferences) {
         return parallelismManager.runIfNotAlreadyWaitingAsHttp(preferences.sonarProjectId(), () -> desirabilitySource.calculateIssueDesirability(preferences));
     }
 }
