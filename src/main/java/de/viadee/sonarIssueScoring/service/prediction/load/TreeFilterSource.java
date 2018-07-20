@@ -37,7 +37,7 @@ class TreeFilterSource {
         public boolean shouldBeRecursive() { return true;}
 
         //This is not an actual clone method, just named as such by the implemented interface
-        @SuppressWarnings({"CloneInNonCloneableClass", "UseOfClone","squid:S1182"})
+        @SuppressWarnings({"CloneInNonCloneableClass", "UseOfClone", "squid:S1182", "squid:S2975"})
         @Override
         public TreeFilter clone() { return this;}
     }
