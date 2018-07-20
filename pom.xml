@@ -9,6 +9,18 @@
     <packaging>jar</packaging>
     <name>sonarIssueScoring</name>
 
+    <licenses>
+        <license>
+            <name>FreeBSD License</name>
+            <url>https://opensource.org/licenses/BSD-3-Clause</url>
+        </license>
+    </licenses>
+
+    <organization>
+        <name>viadee Unternehmensberatung AG</name>
+        <url>https://www.viadee.de</url>
+    </organization>
+
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
@@ -137,6 +149,31 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
             <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>0.8.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>3.2.1</version>
+                <configuration>
+                    <!--fail on CVSS v3 critical ratings-->
+                    <failBuildOnCVSS>9</failBuildOnCVSS>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.6.0</version>
@@ -146,7 +183,6 @@
             </plugin>
         </plugins>
     </build>
-
 
     <reporting>
         <excludeDefaults>true</excludeDefaults>
