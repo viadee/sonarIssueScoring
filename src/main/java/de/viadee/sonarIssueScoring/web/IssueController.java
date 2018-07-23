@@ -24,7 +24,14 @@ public class IssueController {
         this.parallelismManager = parallelismManager;
     }
 
-    //Maps issue key to desirability
+    /**
+     * Calculates and returns the Desirability-Score for each open issue in the given Repository.
+     * <p>
+     * If there is already a running DS-Calculation for the given sonar project-id, the request is rejected with an error 429.
+     *
+     * @param preferences settings, like where to get the data
+     * @return A map of Sonar-Issue-Key to the issues Desirability-Score and its individual components / ratings
+     */
     @PostMapping(path = "desirability")
     public ResponseEntity<Map<String, IssueDesirability>> desirability(@RequestBody UserPreferences preferences) {
         return parallelismManager.runIfNotAlreadyWaitingAsHttp(preferences.sonarProjectId(), () -> desirabilitySource.calculateIssueDesirability(preferences));

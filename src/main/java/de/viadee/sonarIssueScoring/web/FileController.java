@@ -23,8 +23,16 @@ public class FileController {
         this.parallelismManager = parallelismManager;
     }
 
+    /**
+     * Calculates the a prediction of how much each java file in the given git-repository is going to change over the next N commits (prediction horizon)
+     * <p>
+     * The predicted value is the number of commits touching the file, scaled from 0 to 1 via its <a href="https://en.wikipedia.org/wiki/Percentile_rank">percentile rank</a>.
+     *
+     * @param params preferences, like where to fetch data from
+     * @return the predicted values and some associated metrics
+     */
     @PostMapping(path = "predict")
-    public ResponseEntity<PredictionResult> desirability(@RequestBody FilePredictionParams params) {
+    public ResponseEntity<PredictionResult> changePrediction(@RequestBody FilePredictionParams params) {
         return parallelismManager.runIfNotAlreadyWaitingAsHttp(params.gitServer().url(),
                 () -> predictionService.predict(PredictionParams.of(params.gitServer(), params.predictionHorizon()), params.h2oUrl()));
     }
