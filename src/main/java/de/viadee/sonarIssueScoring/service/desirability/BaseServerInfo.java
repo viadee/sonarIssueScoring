@@ -1,10 +1,12 @@
 package de.viadee.sonarIssueScoring.service.desirability;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import de.viadee.sonarIssueScoring.misc.ImmutableStyle;
+import javax.annotation.Nullable;
+
 import org.immutables.value.Value.Immutable;
 
-import javax.annotation.Nullable;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
+import de.viadee.sonarIssueScoring.misc.ImmutableStyle;
 
 /**
  * Location / authentication information for external servers.
@@ -16,9 +18,16 @@ import javax.annotation.Nullable;
 public abstract class BaseServerInfo {
     public abstract String url();
 
-    @Nullable public abstract String user();
+    @Nullable
+    public abstract String user();
 
-    @Nullable public abstract String password();
+    @Nullable
+    public abstract String password();
 
     public static ServerInfo anonymous(String url) {return ServerInfo.of(url, null, null);}
+
+    @Override
+    public String toString() { // Hide passwords
+        return "ServerInfo[url=" + url() + ", user=" + user() + ", password" + (password() == null ? "==" : "!=") + "null]";
+    }
 }
