@@ -18,8 +18,8 @@ public class ParallelismManager {
 
     /**
      * Runs the given supplier eventually, if there isn't one already waiting for the same key.
-     * *
-     * If the given jey is already waiting / running, doesn't run and returns an empty optional
+     *
+     * If the given key is already waiting / running, doesn't run and returns an empty optional
      * <p>
      * Otherwise waits for other suppliers to finish, to run the supplied one eventually
      *
@@ -38,8 +38,8 @@ public class ParallelismManager {
                 return Optional.of(code.get()); //Execute actual long-running computation
             } finally {
                 //noinspection NestedSynchronizedStatement nested locks are fine, the inner lock is very short-lived
-                synchronized (waitingOrRunningProjects) { //Remove from waiting list
-                    waitingOrRunningProjects.remove(key);
+                synchronized (waitingOrRunningProjects) {
+                    waitingOrRunningProjects.remove(key); //Remove from waiting list
                 }
             }
         }
