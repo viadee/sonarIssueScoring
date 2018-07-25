@@ -1,5 +1,12 @@
 package de.viadee.sonarIssueScoring.service.prediction.load;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.treewalk.TreeWalk;
@@ -7,12 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
+import com.google.common.collect.ImmutableMap;
 
 /**
  * Creates a snapshot of the repo content at a specific commit
@@ -28,11 +30,11 @@ class RepositorySnapshotCreator {
         this.stringCache = stringCache;
     }
 
-    public RepositorySnapshot createSnapshot(Repository repo, Commit commit) throws IOException {
+    public ImmutableMap<Path, String> createSnapshot(Repository repo, Commit commit) throws IOException {
         return createSnapshot(repo, repo.parseCommit(repo.resolve(commit.id())), commit);
     }
 
-    private RepositorySnapshot createSnapshot(Repository repo, RevCommit commitGit, Commit commit) throws IOException {
+    private ImmutableMap<Path, String> createSnapshot(Repository repo, RevCommit commitGit, Commit commit) throws IOException {
         log.trace("Creating snapshot for {}", commitGit);
         try (TreeWalk treeWalk = new TreeWalk(repo)) {
             treeWalk.addTree(commitGit.getTree());
@@ -48,7 +50,7 @@ class RepositorySnapshotCreator {
                 content.put(Paths.get(stringCache.deduplicate(treeWalk.getPathString())), stringCache.deduplicate(fileContents));
             }
 
-            return RepositorySnapshot.of(commit, content);
+            return ImmutableMap.copyOf(content);
         }
     }
 }

@@ -1,8 +1,13 @@
 package de.viadee.sonarIssueScoring.service.prediction.load;
 
-import com.google.common.collect.ImmutableList;
-import de.viadee.sonarIssueScoring.misc.ImmutableStyle;
+import java.nio.file.Path;
+
 import org.immutables.value.Value.Immutable;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+
+import de.viadee.sonarIssueScoring.misc.ImmutableStyle;
 
 /**
  * Main class representing the parsed content of a GithubRepo at a specific point in time
@@ -10,8 +15,8 @@ import org.immutables.value.Value.Immutable;
 @Immutable
 @ImmutableStyle
 public abstract class BaseRepo {
+    /** All commits up until the snapshot */
     public abstract ImmutableList<Commit> commits();
 
-    /** Current content, as of time of snapshot */
-    public abstract RepositorySnapshot snapshot();
+    public abstract ImmutableMap<Path, String> currentContent();
 }

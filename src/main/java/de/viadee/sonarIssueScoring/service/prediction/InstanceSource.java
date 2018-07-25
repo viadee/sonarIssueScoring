@@ -27,7 +27,7 @@ public class InstanceSource {
     }
 
     private ImmutableMap<Path, Builder> createBuilders(Repo past) {
-        ImmutableMap<Path, Builder> output = past.snapshot().getAllFiles().keySet().stream().collect(
+        ImmutableMap<Path, Builder> output = past.currentContent().keySet().stream().collect(
                 ImmutableMap.toImmutableMap(path -> path, path -> Instance.builder().path(path)));
 
         featureExtractors.forEach(extractor -> extractor.extractFeatures(past, output));

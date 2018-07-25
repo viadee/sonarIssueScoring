@@ -38,8 +38,7 @@ public class MetricExtractor implements FeatureExtractor {
 
         //This new PrintStream is here to silence System.out.println in CBO.java on line 172
 
-        @SuppressWarnings("squid:S106")
-        PrintStream original = System.out;
+        @SuppressWarnings("squid:S106") PrintStream original = System.out;
         System.setOut(new PrintStream(original) {
             @Override
             public void println(Object x) {
@@ -52,7 +51,7 @@ public class MetricExtractor implements FeatureExtractor {
 
     @Override
     public void extractFeatures(Repo repo, Map<Path, Builder> output) {
-        try (TempSourceFolder dir = new TempSourceFolder(repo.snapshot().getAllFiles())) {
+        try (TempSourceFolder dir = new TempSourceFolder(repo.currentContent())) {
 
             SetMultimap<String, String> dependencies = HashMultimap.create();
             Multiset<String> commentsPerFile = HashMultiset.create(); //String is filename

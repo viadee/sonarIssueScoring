@@ -24,7 +24,7 @@ public abstract class AbstractPrefixSuffixExtractor implements FeatureExtractor 
      * If it is otherwise used less then 7 times, it is labeled as NonSpecial
      */
     @Override public void extractFeatures(Repo repo, Map<Path, Builder> output) {
-        ImmutableMap<Path, String> pathToSpecialMap = repo.snapshot().getAllFiles().keySet().stream().collect(
+        ImmutableMap<Path, String> pathToSpecialMap = repo.currentContent().keySet().stream().collect(
                 toImmutableMap(p -> p, p -> extractRelevantPart(p.getFileName().toString())));
 
         ImmutableMultiset<String> histogram = ImmutableMultiset.copyOf(pathToSpecialMap.values());
