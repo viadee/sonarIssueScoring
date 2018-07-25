@@ -3,7 +3,6 @@ package de.viadee.sonarIssueScoring.service.prediction.extract.sourcecode;
 import static com.google.common.base.Preconditions.*;
 
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -15,7 +14,6 @@ import com.github.javaparser.ParseResult;
 import com.github.javaparser.ParseStart;
 import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.ParserConfiguration.LanguageLevel;
-import com.github.javaparser.Problem;
 import com.github.javaparser.Providers;
 import com.github.javaparser.ast.CompilationUnit;
 import com.google.common.collect.ImmutableMap;
@@ -40,14 +38,16 @@ class ParsedProject {
     private static CompilationUnit parse(JavaParser parser, Path path, String content) {
         ParseResult<CompilationUnit> res = parser.parse(ParseStart.COMPILATION_UNIT, Providers.provider(content));
 
-        return res.getResult().orElseGet(() -> generateFallbackClass(path, res.getProblems()));
+        if (res.isSuccessful())
+            return res.getResult().get(); //Optional has to be present
+        return generateFallbackClass(path);
     }
 
     /**
      * To avoid having to handle parse failures separately, this methods creates a simplistic compilation unit, as if the class was empty except for a single class definition
      */
-    private static CompilationUnit generateFallbackClass(Path path, List<Problem> problems) {
-        log.warn("Could not parse {} due to {}, using empty fallback class", path, problems);
+    private static CompilationUnit generateFallbackClass(Path path) {
+        log.warn("Could not parse {}, using empty fallback class", path);
 
         CompilationUnit cu = new CompilationUnit();
         cu.addClass(path.getFileName().toString().replace(".java", ""));
