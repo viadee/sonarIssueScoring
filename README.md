@@ -74,7 +74,3 @@ This project is licensed under the BSD 3-Clause "New" or "Revised" License - see
 
 The licenses of the reused components can be found in the [dependency overview](https://rawgit.com/viadee/sonarIssueScoring/master/docs/MavenSite/dependencies.html).
 
-Additionally, [DependencyVisitor.java](src/main/java/de/viadee/sonarIssueScoring/service/prediction/extract/DependencyVisitor.java) is mostly a copy of 
-[CBO.java](https://github.com/mauricioaniche/ck/blob/master/src/main/java/com/github/mauricioaniche/ck/metric/CBO.java) from the Apache2-Licensed [ck](https://github.com/mauricioaniche/ck) library
- 
-
