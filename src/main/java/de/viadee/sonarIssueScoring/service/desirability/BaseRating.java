@@ -1,19 +1,21 @@
 package de.viadee.sonarIssueScoring.service.desirability;
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import de.viadee.sonarIssueScoring.misc.ImmutableStyle;
+import java.util.Optional;
+
 import org.immutables.value.Value.Immutable;
 
-import java.util.Optional;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
+import de.viadee.sonarIssueScoring.misc.ImmutableStyle;
 
 /**
  * A single rating, part of the Desirability-Score of a specific issue.
  * <p>
  * Optionally contains an explanation why the exact value was chosen.
  */
-@SuppressWarnings("ClassReferencesSubclass")
+@SuppressWarnings({"ClassReferencesSubclass", "DefaultAnnotationParam"})
 @JsonSerialize
-@Immutable
+@Immutable(copy = true) //Explicitly needed, as the changed defaults in @ImmutableStyle disable the with* Mutators
 @ImmutableStyle
 public abstract class BaseRating {
     public abstract RatingType type();
