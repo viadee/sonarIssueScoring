@@ -31,10 +31,10 @@ class RepositorySnapshotCreator {
     }
 
     public ImmutableMap<Path, String> createSnapshot(Repository repo, Commit commit) throws IOException {
-        return createSnapshot(repo, repo.parseCommit(repo.resolve(commit.id())), commit);
+        return createSnapshot(repo, repo.parseCommit(repo.resolve(commit.id())));
     }
 
-    private ImmutableMap<Path, String> createSnapshot(Repository repo, RevCommit commitGit, Commit commit) throws IOException {
+    private ImmutableMap<Path, String> createSnapshot(Repository repo, RevCommit commitGit) throws IOException {
         log.trace("Creating snapshot for {}", commitGit);
         try (TreeWalk treeWalk = new TreeWalk(repo)) {
             treeWalk.addTree(commitGit.getTree());
