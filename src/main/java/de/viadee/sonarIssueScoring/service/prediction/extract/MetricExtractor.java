@@ -77,7 +77,7 @@ public class MetricExtractor implements FeatureExtractor {
             if (num != null) {
                 out.packageDef(packageName(num.getClassName())).
                         numberOfMethods(num.getNom()).
-                        cyclomaticComplexity(num.getLcom()).
+                        cyclomaticComplexity(num.getWmc()).
                         linesOfCode(num.getLoc());
             }
         });
