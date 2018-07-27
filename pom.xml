@@ -178,7 +178,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.6.0</version>
                 <configuration>
-                    <mainClass>de.viadee.sonarIssueScoring.WebStart</mainClass>
+                    <mainClass>de.viadee.sonarIssueScoring.SonarIssueScoringApplication</mainClass>
                 </configuration>
             </plugin>
         </plugins>
