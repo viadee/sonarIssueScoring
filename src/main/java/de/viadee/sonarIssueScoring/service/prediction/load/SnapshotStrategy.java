@@ -14,6 +14,6 @@ public enum SnapshotStrategy {
      */
     public IntStream generateOffsets(int predictionHorizon) {
         return IntStream.iterate(0, prev -> prev + predictionHorizon / 2).
-                filter(i -> this == OVERLAP_ALWAYS || i >= predictionHorizon);
+                filter(i -> this == OVERLAP_ALWAYS || i == 0 || i >= predictionHorizon);
     }
 }
