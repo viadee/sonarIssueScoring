@@ -27,6 +27,8 @@ public class ParallelismManagerTest {
             return order.incrementAndGet();
         }));
 
+        Uninterruptibles.sleepUninterruptibly(20, TimeUnit.MILLISECONDS);
+
         //KeyA is already running, should not return anything
         Future<Optional<Integer>> futureBlocked = executor.submit(() -> mgr.runIfNotAlreadyWaiting("keyA", order::incrementAndGet));
         //KeyB can run after keyA
