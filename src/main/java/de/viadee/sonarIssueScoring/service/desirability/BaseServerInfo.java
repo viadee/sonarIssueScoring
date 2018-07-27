@@ -2,7 +2,9 @@ package de.viadee.sonarIssueScoring.service.desirability;
 
 import javax.annotation.Nullable;
 
+import org.immutables.value.Value;
 import org.immutables.value.Value.Immutable;
+import org.immutables.value.Value.Redacted;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
@@ -22,12 +24,8 @@ public abstract class BaseServerInfo {
     public abstract String user();
 
     @Nullable
+    @Redacted
     public abstract String password();
 
     public static ServerInfo anonymous(String url) {return ServerInfo.of(url, null, null);}
-
-    @Override
-    public String toString() { // Hide passwords
-        return "ServerInfo[url=" + url() + ", user=" + user() + ", password" + (password() == null ? "==" : "!=") + "null]";
-    }
 }
