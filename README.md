@@ -26,6 +26,13 @@ Alternatively, only the change count can be predicted (entry point: [FileControl
 curl -d '{"predictionHorizon": 256,"gitServer": {"url":"https://github.com/apache/commons-io"},"h2oUrl":"http://localhost:54321"}' -H "Content-Type: application/json" -X POST http://localhost:5432/files/predict
 ```
 
+## Evaluation
+
+To evaluate the prediction quality, run the main class / maven call above with the argument `--evaluate`. This will predict the future for a default project, and compare 
+it with the real, unseen future. This process does not start the REST api.
+
+This evaluation can further be customized with the arguments `--repo=`, `--user=`, `--password=` and `--horizon=`  
+
 ## Functionality
 
 This tool consists of two major parts, the first one being the Desirability-Score for calculating the importance / desire for a fix of a specific issue.

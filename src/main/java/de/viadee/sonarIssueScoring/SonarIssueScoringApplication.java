@@ -1,8 +1,10 @@
 package de.viadee.sonarIssueScoring;
 
-import org.springframework.boot.SpringApplication;
+import org.springframework.boot.DefaultApplicationArguments;
+import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -18,6 +20,11 @@ public class SonarIssueScoringApplication {
     }
 
     public static void main(String[] args) {
-        SpringApplication.run(SonarIssueScoringApplication.class, args);
+        boolean runEvaluation = Evaluator.willRunEvaluation(new DefaultApplicationArguments(args));
+        new SpringApplicationBuilder().
+                main(SonarIssueScoringApplication.class).
+                sources(SonarIssueScoringApplication.class).
+                web(runEvaluation ? WebApplicationType.NONE : WebApplicationType.SERVLET).
+                run(args);
     }
 }
