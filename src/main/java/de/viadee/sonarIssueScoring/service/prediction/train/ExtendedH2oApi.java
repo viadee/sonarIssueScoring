@@ -166,8 +166,7 @@ class ExtendedH2oApi {
                 col -> !col.startsWith("target") && !col.equals("fold") && !col.equals("path")).
                 collect(ImmutableMap.toImmutableMap(k -> k, k -> realImportanceMap.getOrDefault(k, 0.0)));
 
-        return ModelMetrics.of(metrics.get("MSE").asDouble(), metrics.get("RMSE").asDouble(), metrics.get("r2").asDouble(),
-                metrics.path("mean_residual_deviance").asDouble(), metrics.path("mae").asDouble(), metrics.path("rmsle").asDouble(), importanceMapAll);
+        return ModelMetrics.of(metrics.get("RMSE").asDouble(), metrics.get("r2").asDouble(), metrics.path("mean_residual_deviance").asDouble(), importanceMapAll);
     }
 
     private static double nanToZero(double in) {return Double.isNaN(in) ? 0 : in;}
