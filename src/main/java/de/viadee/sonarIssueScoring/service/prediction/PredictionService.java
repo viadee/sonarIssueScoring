@@ -1,14 +1,16 @@
 package de.viadee.sonarIssueScoring.service.prediction;
 
+import java.util.List;
+
+import org.springframework.stereotype.Component;
+
 import de.viadee.sonarIssueScoring.service.PredictionParams;
+import de.viadee.sonarIssueScoring.service.prediction.load.SnapshotStrategy;
 import de.viadee.sonarIssueScoring.service.prediction.load.RepositoryLoader;
 import de.viadee.sonarIssueScoring.service.prediction.load.SplitRepository;
 import de.viadee.sonarIssueScoring.service.prediction.train.Instance;
 import de.viadee.sonarIssueScoring.service.prediction.train.MLInput;
 import de.viadee.sonarIssueScoring.service.prediction.train.MLService;
-import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 @Component
 public class PredictionService {
@@ -24,7 +26,7 @@ public class PredictionService {
     }
 
     public PredictionResult predict(PredictionParams params, String h2oServer) {
-        SplitRepository data = repositoryLoader.loadSplitRepository(params);
+        SplitRepository data = repositoryLoader.loadSplitRepository(params, SnapshotStrategy.OVERLAP_ALWAYS);
 
         List<Instance> instances = instanceSource.extractInstances(data.trainingData());
         List<Instance> predictableInstances = instanceSource.extractInstances(data.completePast());
