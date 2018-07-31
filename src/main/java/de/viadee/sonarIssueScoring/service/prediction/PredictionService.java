@@ -85,7 +85,8 @@ public class PredictionService {
     }
 
     static class ResultPair {
-        private final double predicted, actual;
+        private final double predicted;
+        private final double actual;
 
         ResultPair(double predicted, double actual) {
             this.predicted = predicted;

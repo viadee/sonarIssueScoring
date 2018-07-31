@@ -2,7 +2,6 @@ package de.viadee.sonarIssueScoring.service.desirability;
 
 import javax.annotation.Nullable;
 
-import org.immutables.value.Value;
 import org.immutables.value.Value.Immutable;
 import org.immutables.value.Value.Redacted;
 
