@@ -51,7 +51,7 @@ public class TargetExtractor {
         output.forEach((path, out) -> out.fold(0).targetEditCountPercentile(0));
     }
 
-    private static Map<Path, Double> rank(ImmutableMap<Path, Integer> in) {
+    @VisibleForTesting static Map<Path, Double> rank(ImmutableMap<Path, Integer> in) {
         Path[] paths = in.keySet().toArray(new Path[0]);
 
         PercentilesScaledRanking ranking = new PercentilesScaledRanking(TiesStrategy.MINIMUM);
