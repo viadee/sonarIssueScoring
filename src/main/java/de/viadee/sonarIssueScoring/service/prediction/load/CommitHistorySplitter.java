@@ -19,16 +19,17 @@ class CommitHistorySplitter {
      * Splits a commit list in past and future. Commits start with HEAD, and go in the past
      * The breakpoint commit at which the prediction is done (last commit of past) is pastOffset + predictionHorizon. This is the last commit in the past.
      * Ranges:
-     * 0           .. pastOffset (excl): Ignored
-     * pastOffset  .. pastOffset + predictionHorizon (excl): Future
-     * pastOffset + predictionHorizon .. end: Past
+     * 0                              .. pastOffset (excl): Ignored
+     * pastOffset                     .. pastOffset + predictionHorizon (excl): Future
+     * pastOffset + predictionHorizon .. end (incl): Past
      */
     public PastFuturePair splitCommits(Repository repository, List<Commit> commits, int pastOffset, int predictionHorizon) throws IOException {
         int breakpoint = pastOffset + predictionHorizon;
 
+        Repo futureRepo = createRepo(repository, commits.subList(pastOffset, breakpoint));
         Repo pastRepo = createRepo(repository, commits.subList(breakpoint, commits.size()));
 
-        return PastFuturePair.of(pastRepo, createRepo(repository, commits.subList(pastOffset, breakpoint)));
+        return PastFuturePair.of(pastRepo, futureRepo);
     }
 
     public Repo createRepo(Repository repo, List<Commit> commits) throws IOException {
