@@ -1,23 +1,32 @@
 package de.viadee.sonarIssueScoring.service.prediction.load;
 
-import com.google.common.collect.ImmutableMap;
-import de.viadee.sonarIssueScoring.service.prediction.load.BaseCommit.DiffType;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.DayOfWeek;
+import java.util.Date;
+import java.util.List;
+import java.util.TimeZone;
+
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.File;
-import java.nio.file.Paths;
-import java.util.List;
+import com.google.common.collect.ImmutableMap;
+
+import de.viadee.sonarIssueScoring.service.prediction.load.BaseCommit.DiffType;
 
 public class CommitHistoryReaderTest {
 
     @Rule public final TemporaryFolder folder = new TemporaryFolder();
 
-    @Test public void readCommits() throws Exception {
+    @Test
+    public void testFlattening() throws Exception {
         try (Git git = Git.init().setDirectory(folder.getRoot()).call()) {
             commit(git, "0.java");
             RevCommit split = commit(git, "1.java");
@@ -43,9 +52,64 @@ public class CommitHistoryReaderTest {
         }
     }
 
-    @SuppressWarnings("ResultOfMethodCallIgnored") private RevCommit commit(Git git, String file) throws Exception {
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    private RevCommit commit(Git git, String file) throws Exception {
         new File(folder.getRoot(), file).createNewFile();
         git.add().addFilepattern(".").call();
         return git.commit().setMessage(file).call();
+    }
+
+    @Test
+    public void testIgnoreNonJava() throws Exception {
+        try (Git git = Git.init().setDirectory(folder.getRoot()).call()) {
+            commit(git, "0.c");
+            List<Commit> read = new CommitHistoryReader(new TreeFilterSource()).readCommits(git.getRepository());
+
+            Assert.assertEquals(0, read.size());
+        }
+    }
+
+    @Test
+    public void testModifyDelete() throws Exception {
+        try (Git git = Git.init().setDirectory(folder.getRoot()).call()) {
+            commit(git, "1.java");
+            //Modify
+            Path file = folder.getRoot().toPath().resolve("1.java");
+            Files.write(file, "abc".getBytes());
+            git.add().addFilepattern(".").call();
+            git.commit().setMessage("mod").call();
+            //Delete
+            Files.delete(file);
+            git.rm().addFilepattern("1.java").call();
+            git.commit().setMessage("del").call();
+
+            List<Commit> read = new CommitHistoryReader(new TreeFilterSource()).readCommits(git.getRepository());
+
+            Assert.assertEquals(3, read.size());
+            Assert.assertEquals(ImmutableMap.of(Paths.get("1.java"), DiffType.ADDED), read.get(2).diffs());
+            Assert.assertEquals(ImmutableMap.of(Paths.get("1.java"), DiffType.MODIFIED), read.get(1).diffs());
+            Assert.assertEquals(ImmutableMap.of(Paths.get("1.java"), DiffType.DELETED), read.get(0).diffs());
+        }
+    }
+
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    @Test
+    public void metaDataExtraction() throws Exception {
+        try (Git git = Git.init().setDirectory(folder.getRoot()).call()) {
+            //File is required, otherwise no java file is found and no commit is created
+            new File(folder.getRoot(), "1.java").createNewFile();
+            git.add().addFilepattern(".").call();
+
+            //Monday January 12, 1970 22:46:39 (pm) in time zone Asia/Tokyo (JST)
+            PersonIdent author = new PersonIdent("name", "email", new Date(999_999_000), TimeZone.getTimeZone("Asia/Tokyo"));
+            RevCommit revCommit = git.commit().setMessage("msg").setAuthor(author).call();
+
+            Commit c = new CommitHistoryReader(new TreeFilterSource()).createCommitWithDiff(git.getRepository(), revCommit, null).orElseThrow(IllegalStateException::new);
+
+            Assert.assertEquals("email", c.authorEmail());
+            Assert.assertEquals(DayOfWeek.MONDAY, c.authorDay());
+            Assert.assertEquals(0.9490625, c.authorTime(), 1.0e8);
+            Assert.assertEquals("msg", c.message());
+        }
     }
 }

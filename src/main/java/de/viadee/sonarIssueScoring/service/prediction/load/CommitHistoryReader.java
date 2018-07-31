@@ -1,19 +1,9 @@
 package de.viadee.sonarIssueScoring.service.prediction.load;
 
-import com.google.common.collect.ImmutableList;
-import de.viadee.sonarIssueScoring.service.prediction.load.BaseCommit.DiffType;
-import org.eclipse.jgit.diff.DiffEntry;
-import org.eclipse.jgit.lib.PersonIdent;
-import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.revwalk.RevFlag;
-import org.eclipse.jgit.revwalk.RevSort;
-import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.treewalk.EmptyTreeIterator;
-import org.eclipse.jgit.treewalk.TreeWalk;
-import org.springframework.stereotype.Service;
+import static de.viadee.sonarIssueScoring.service.prediction.load.BaseCommit.DiffType.*;
+import static org.eclipse.jgit.diff.DiffEntry.ChangeType;
+import static org.eclipse.jgit.diff.DiffEntry.scan;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -25,9 +15,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static de.viadee.sonarIssueScoring.service.prediction.load.BaseCommit.DiffType.*;
-import static org.eclipse.jgit.diff.DiffEntry.ChangeType;
-import static org.eclipse.jgit.diff.DiffEntry.scan;
+import javax.annotation.Nullable;
+
+import org.eclipse.jgit.diff.DiffEntry;
+import org.eclipse.jgit.lib.PersonIdent;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevFlag;
+import org.eclipse.jgit.revwalk.RevSort;
+import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.treewalk.EmptyTreeIterator;
+import org.eclipse.jgit.treewalk.TreeWalk;
+import org.springframework.stereotype.Service;
+
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
+
+import de.viadee.sonarIssueScoring.service.prediction.load.BaseCommit.DiffType;
 
 /**
  * Transforms a JGit Repository in a linearized history of commits
@@ -92,7 +96,8 @@ class CommitHistoryReader {
     }
 
     /** Creates a Commit object (containing a diff to the previous commit). If the previous commit is null, an empty tree will be used instead */
-    private Optional<Commit> createCommitWithDiff(Repository repo, RevCommit current, @Nullable RevCommit previous) throws IOException {
+    @VisibleForTesting
+    Optional<Commit> createCommitWithDiff(Repository repo, RevCommit current, @Nullable RevCommit previous) throws IOException {
         try (TreeWalk treeWalk = new TreeWalk(repo)) {
             if (previous == null)
                 treeWalk.addTree(new EmptyTreeIterator());
