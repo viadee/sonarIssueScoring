@@ -74,11 +74,14 @@ public abstract class BaseInstance {
 
     @JsonIgnore public abstract Map<CommitAge, Integer> commitAgePackage();
 
-    //This construct of ignoring map fields and adding them back is required due to jackson-csv inability to handle maps
-    //See also CsvConverter.java
+    /**
+     * @deprecated internal method for jackson, do not use
+     */
     @Deprecated
     @JsonAnyGetter
     public Map<String, Integer> _flattenedMapsForJackson() {
+        //This construct of ignoring map fields and adding them back is required due to jackson-csv inability to handle maps
+        //See also CsvConverter.java
         Builder<String, Integer> builder = ImmutableMap.builder();
         commitAge().forEach((age, val) -> builder.put("commitAge." + age, val));
         commitAgePackage().forEach((age, val) -> builder.put("commitAgePackage." + age, val));
