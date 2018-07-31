@@ -50,9 +50,9 @@ public class TargetExtractorTest {
 
         Assert.assertEquals(14, ranked.size());
 
-        Assert.assertEquals(0, ranked.get(Paths.get("a")), 1.0e4);
-        Assert.assertEquals(0.4286, ranked.get(Paths.get("g")), 1.0e4);
-        Assert.assertEquals(0.7857, ranked.get(Paths.get("l")), 1.0e4);
-        Assert.assertEquals(0.9286, ranked.get(Paths.get("l")), 1.0e4);
+        Assert.assertEquals(0, ranked.get(Paths.get("a")), 1.0e-4);
+        Assert.assertEquals(0.4286, ranked.get(Paths.get("g")), 1.0e-4);
+        Assert.assertEquals(0.7857, ranked.get(Paths.get("l")), 1.0e-4);
+        Assert.assertEquals(0.9286, ranked.get(Paths.get("n")), 1.0e-4);
     }
 }
