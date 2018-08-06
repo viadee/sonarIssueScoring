@@ -13,10 +13,12 @@ public enum CommitAge {
     Minus8(8),
     Minus16(16);
 
-    public final int offset;
+    private final int offset;
 
     CommitAge(int offset) {
         this.offset = offset;
     }
+
+    public int offset() {return offset;}
 }
 

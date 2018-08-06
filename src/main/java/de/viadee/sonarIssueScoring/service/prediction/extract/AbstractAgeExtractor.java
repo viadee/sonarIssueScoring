@@ -42,7 +42,7 @@ public abstract class AbstractAgeExtractor implements FeatureExtractor {
             List<Integer> commitList = commitIndices.get(extractPath(path));
 
             for (CommitAge age : CommitAge.values())
-                putResult(out, age, Iterables.get(commitList, age.offset, Integer.MAX_VALUE));
+                putResult(out, age, Iterables.get(commitList, age.offset(), Integer.MAX_VALUE));
         });
     }
 
