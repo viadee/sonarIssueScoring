@@ -39,7 +39,7 @@ class RepositorySnapshotCreator {
         try (TreeWalk treeWalk = new TreeWalk(repo)) {
             treeWalk.addTree(commitGit.getTree());
             treeWalk.setFilter(treeFilterSource.getTreeFilter());
-            treeWalk.setRecursive(true); //We don't care about directories
+            treeWalk.setRecursive(true); //We don't care about directories - this automatically enters them
 
             Map<Path, String> content = new HashMap<>();
 

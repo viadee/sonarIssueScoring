@@ -39,7 +39,7 @@ public class RepositoryLoader {
 
             for (Integer offset : offsets) {
                 if (offset + params.predictionHorizon() >= history.size())
-                    break;
+                    break; //No more history - we are done
                 builder.addTrainingData(commitHistorySplitter.splitCommits(git.getRepository(), history, offset, params.predictionHorizon()));
             }
 

@@ -21,6 +21,8 @@ class TreeFilterSource {
      * <p>
      * Known limitation: excludes any directory ending with *test. This includes directories like libtest.
      * It also isn't searching for source roots, even a package named test will be excluded.
+     * <p>
+     * Additionally, package-info and module-info are excluded, as they aren't "normal" too.     *
      */
     private static class ExcludeTestRootsFilter extends TreeFilter {
         private static final byte[] TEST = Constants.encode("test");

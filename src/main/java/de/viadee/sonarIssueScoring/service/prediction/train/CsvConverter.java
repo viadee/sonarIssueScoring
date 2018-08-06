@@ -23,12 +23,14 @@ public class CsvConverter {
     private final CsvSchema schema;
 
     public CsvConverter() {
-        //This is no bean, because it's also an ObjectMapper, which clashes with the default ObjectMapper config
+        //This is no bean, because it's a subclass of ObjectMapper, which clashes with the default ObjectMapper config
+        //As it is only used here, injection is not required
         this.csvMapper = new CsvMapper().configure(Feature.ALWAYS_QUOTE_STRINGS, true);
 
         Builder builder = CsvSchema.builder().setUseHeader(true);
 
         //Auto schema detection is a bit wonky, detecting numbers as strings.
+        // => Define types explicitly
         for (Method method : BaseInstance.class.getDeclaredMethods()) {
             Class<?> type = method.getReturnType();
             if (type != void.class && type != Map.class)
