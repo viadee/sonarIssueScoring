@@ -5,9 +5,6 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import java.io.IOException;
 import java.util.List;
 
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.springframework.stereotype.Service;
 
 import de.viadee.sonarIssueScoring.service.PredictionParams;
@@ -29,22 +26,24 @@ public class RepositoryLoader {
     }
 
     public SplitRepository loadSplitRepository(PredictionParams params, SnapshotStrategy multiSampling) {
-        try (Git git = repositoryCache.getRepository(params.gitServer())) {
-            List<Commit> history = commitHistoryReader.readCommits(git.getRepository());
+        try {
+            return repositoryCache.readRepository(params.gitServer(), git -> {
+                List<Commit> history = commitHistoryReader.readCommits(git.getRepository());
 
-            Builder builder = SplitRepository.builder();
-            builder.completePast(commitHistorySplitter.createRepo(git.getRepository(), history));
+                Builder builder = SplitRepository.builder();
+                builder.completePast(commitHistorySplitter.createRepo(git.getRepository(), history));
 
-            List<Integer> offsets = multiSampling.generateOffsets(params.predictionHorizon()).limit(10).boxed().collect(toImmutableList());
+                List<Integer> offsets = multiSampling.generateOffsets(params.predictionHorizon()).limit(10).boxed().collect(toImmutableList());
 
-            for (Integer offset : offsets) {
-                if (offset + params.predictionHorizon() >= history.size())
-                    break; //No more history - we are done
-                builder.addTrainingData(commitHistorySplitter.splitCommits(git.getRepository(), history, offset, params.predictionHorizon()));
-            }
+                for (Integer offset : offsets) {
+                    if (offset + params.predictionHorizon() >= history.size())
+                        break; //No more history - we are done
+                    builder.addTrainingData(commitHistorySplitter.splitCommits(git.getRepository(), history, offset, params.predictionHorizon()));
+                }
 
-            return builder.build();
-        } catch (IOException | GitAPIException | JGitInternalException e) {
+                return builder.build();
+            });
+        } catch (IOException e) {
             throw new RuntimeException("Error while reading " + params, e);
         }
     }

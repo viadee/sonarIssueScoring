@@ -25,13 +25,13 @@ public class RepositoryCacheTest {
             remote.commit().setAllowEmpty(true).setMessage("Commit 2").call();
             remote.checkout().setName("master").call();
         }
+        //ServerInfo for the above repository
+        ServerInfo remoteServerInfo = ServerInfo.anonymous(folder.getRoot().toURI().toString());
 
         //Clone the previously created repository
-        try (Git cachedGit = new RepositoryCache().getRepository(ServerInfo.anonymous(folder.getRoot().toURI().toString()))) {
-            List<RevCommit> commits = ImmutableList.copyOf(cachedGit.log().call());
-            Assert.assertEquals(1, commits.size());
-            Assert.assertEquals("Commit 1", commits.get(0).getFullMessage());
-        }
+        List<RevCommit> cachedCommits = new RepositoryCache().readRepository(remoteServerInfo, cachedGit -> ImmutableList.copyOf(cachedGit.log().call()));
+        Assert.assertEquals(1, cachedCommits.size());
+        Assert.assertEquals("Commit 1", cachedCommits.get(0).getFullMessage());
 
         //Update "remote" repository
         try (Git remote = Git.open(folder.getRoot())) {
@@ -39,12 +39,10 @@ public class RepositoryCacheTest {
         }
 
         //Check that the update was mirrored too
-        try (Git cachedGit = new RepositoryCache().getRepository(ServerInfo.anonymous(folder.getRoot().toURI().toString()))) {
-            List<RevCommit> commits = ImmutableList.copyOf(cachedGit.log().call());
-            Assert.assertEquals(2, commits.size());
-            Assert.assertEquals("Commit 3", commits.get(0).getFullMessage());
-            Assert.assertEquals("Commit 1", commits.get(1).getFullMessage());
-        }
+        List<RevCommit> updatedCachedCommits = new RepositoryCache().readRepository(remoteServerInfo, cachedGit -> ImmutableList.copyOf(cachedGit.log().call()));
+        Assert.assertEquals(2, updatedCachedCommits.size());
+        Assert.assertEquals("Commit 3", updatedCachedCommits.get(0).getFullMessage());
+        Assert.assertEquals("Commit 1", updatedCachedCommits.get(1).getFullMessage());
     }
 
     @Test
