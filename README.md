@@ -18,7 +18,7 @@ This is all required setup for [SonarQuest](https://github.com/viadee/sonarQuest
 Ordering issues by their desirability to be solved (entry point: [IssueController](src/main/java/de/viadee/sonarIssueScoring/web/IssueController.java)): 
 
 ```bash
-curl -d '{"sonarServer":{"url":"https://sonarcloud.io"},"sonarProjectId":"commons-io:commons-io","predictionHorizon": 256,"gitServer": {"url":"https://github.com/apache/commons-io"},"h2oUrl":"http://localhost:54321"}' -H "Content-Type: application/json" -X POST http://localhost:5432/issues/desirability
+curl -d '{"sonarServer":{"url":"https://sonarcloud.io"},"sonarProjectId":"commons-io_180410","predictionHorizon": 256,"gitServer": {"url":"https://github.com/apache/commons-io"},"h2oUrl":"http://localhost:54321"}' -H "Content-Type: application/json" -X POST http://localhost:5432/issues/desirability
 ```
 
 Alternatively, only the change count can be predicted (entry point: [FileController](src/main/java/de/viadee/sonarIssueScoring/web/FileController.java)):
