@@ -11,7 +11,7 @@ This tool incorporates a prediction of which files in a repository will change, 
 
 ## Getting started
 
-Clone the repository, and execute `mvn install exec:java` in a command line. Additionally, a running [H2O-Server](https://h2o.ai) (version [3.20.0.3](http://h2o-release.s3.amazonaws.com/h2o/latest_stable.html) or greater) is required. 
+Clone the repository, and execute `mvn install exec:java` in a command line. Additionally, a running [H2O-Server](https://h2o.ai) (version [3.24.0.4](http://h2o-release.s3.amazonaws.com/h2o/latest_stable.html) or greater) is required. 
 
 This is all required setup for [SonarQuest](https://github.com/viadee/sonarQuest), alternatively the REST-API can be used directly: 
 
