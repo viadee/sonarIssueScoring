@@ -1,13 +1,10 @@
 package de.viadee.sonarIssueScoring.service.prediction.load;
 
-import static com.google.common.base.Preconditions.*;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.List;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.TransportCommand;
@@ -19,7 +16,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.CharMatcher;
+import com.google.common.base.Splitter;
 import com.google.common.base.StandardSystemProperty;
+import com.google.common.collect.Iterables;
 import com.google.common.hash.Hashing;
 
 import de.viadee.sonarIssueScoring.service.desirability.ServerInfo;
@@ -32,6 +32,7 @@ import de.viadee.sonarIssueScoring.service.desirability.ServerInfo;
 @Service
 public class RepositoryCache {
     private static final Logger log = LoggerFactory.getLogger(RepositoryCache.class);
+    private static final Splitter PATH_SEPERATOR_SPLITTER = Splitter.on(CharMatcher.anyOf("/\\")).omitEmptyStrings();
     private final Path tempDir;
 
     public RepositoryCache() {
@@ -74,11 +75,12 @@ public class RepositoryCache {
     }
 
     /** Extracts a unique directory name from the repository url. Includes hash of url to make collisions unlikely */
-    @VisibleForTesting
-    static String extractRepositoryName(String url) {
-        Matcher m = Pattern.compile(".*/([^/]+)/([^/]+)(\\.git)?").matcher(url);
-        checkState(m.find(), "Could not extract repository name from %s", url);
-        return "repo-" + m.group(1) + "." + m.group(2) + "." + Hashing.murmur3_128().hashUnencodedChars(url) + ".git";
+    @VisibleForTesting static String extractRepositoryName(String url) {
+        String urlWithoutGit = url.replaceFirst("\\.git$", ""); // Url could reference the git file, or local path name could reference the git dir. Remove it.
+        List<String> segments = PATH_SEPERATOR_SPLITTER.splitToList(urlWithoutGit);
+        String possibleGroupName = segments.size() > 1 ? segments.get(segments.size() - 2) : ""; // penultimate element, if existing
+        String possibleProjectName = Iterables.getLast(segments, "");
+        return "repo-" + possibleGroupName + "." + possibleProjectName + "." + Hashing.murmur3_128().hashUnencodedChars(url) + ".git";
     }
 
     @FunctionalInterface

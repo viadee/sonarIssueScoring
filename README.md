@@ -26,6 +26,7 @@ Alternatively, only the change count can be predicted (entry point: [FileControl
 ```bash
 curl -d '{"predictionHorizon": 256,"gitServer": {"url":"https://github.com/apache/commons-io"},"h2oUrl":"http://localhost:54321"}' -H "Content-Type: application/json" -X POST http://localhost:5432/files/predict
 ```
+It is also possible to specify an absolute path (like `"url":"C:\\Users\\Any\\Projects\\EvaluatedProject"` or `"url":"/home/Any/Projects/EvaluatedProject"`) instead of an url.
 
 ## Evaluation
 
