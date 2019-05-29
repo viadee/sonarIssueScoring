@@ -1,6 +1,7 @@
 # SonarIssueScoring
 
-[![Build Status](https://travis-ci.org/viadee/sonarIssueScoring.svg?branch=master)](https://travis-ci.org/viadee/sonarIssueScoring)
+[![Build Status](https://travis-ci.org/viadee/sonarIssueScoring.svg?branch=master)](https://travis-ci.org/viadee/sonarIssueScoring) 
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=de.viadee%3AsonarIssueScoring&metric=coverage)](https://sonarcloud.io/dashboard?id=de.viadee%3AsonarIssueScoring)
 
 This is a tool for prioritizing [SonarQube](https://www.sonarqube.org/) issues, to fix the most important technical debt first.
  It is mainly intended to be used with [SonarQuest](https://github.com/viadee/sonarQuest), but can be used standalone as well.
