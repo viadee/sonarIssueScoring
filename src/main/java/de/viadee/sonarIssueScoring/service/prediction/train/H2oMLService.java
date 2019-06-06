@@ -1,26 +1,29 @@
 package de.viadee.sonarIssueScoring.service.prediction.train;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableList;
-import de.viadee.sonarIssueScoring.service.prediction.FileInformation;
-import de.viadee.sonarIssueScoring.service.prediction.ModelMetrics;
-import de.viadee.sonarIssueScoring.service.prediction.PredictionResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-import water.bindings.pojos.FrameKeyV3;
-import water.bindings.pojos.LeaderboardV99;
+import static com.google.common.base.Preconditions.*;
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static com.google.common.base.Preconditions.*;
-import static com.google.common.collect.ImmutableMap.toImmutableMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableList;
+
+import de.viadee.sonarIssueScoring.service.prediction.FileInformation;
+import de.viadee.sonarIssueScoring.service.prediction.ModelMetrics;
+import de.viadee.sonarIssueScoring.service.prediction.PredictionResult;
+import water.bindings.pojos.FrameKeyV3;
+import water.bindings.pojos.LeaderboardV99;
 
 /**
  * Performs all ML
@@ -44,29 +47,28 @@ public class H2oMLService implements MLService {
         //TODO figure out a better way to do assisted injection, if possible in spring
         ExtendedH2oApi extendedH2OApi = new ExtendedH2oApi(csvConverter, objectMapper, input.h2oUrl());
 
-        try {
-            List<Instance> trainData = input.trainingData().stream().filter(i -> i.fold() >= 0).collect(Collectors.toList());
-            List<Instance> testData = input.trainingData().stream().filter(i -> i.fold() == -1).collect(Collectors.toList());
-            List<Instance> leaderBoardData = input.trainingData().stream().filter(i -> i.fold() == -2).collect(Collectors.toList());
+        Set<String> columns = csvConverter.colNames(input.trainingData());
 
-            FrameKeyV3 train = extendedH2OApi.uploadAndParse(trainData);
-            FrameKeyV3 test = extendedH2OApi.uploadAndParse(testData);
-            FrameKeyV3 leaderBoardFrame = extendedH2OApi.uploadAndParse(leaderBoardData);
+        try {
+            FrameKeyV3 train = extendedH2OApi.uploadAndParse(input.trainingData().stream().filter(i -> i.fold() >= 0).collect(Collectors.toList()));
+            FrameKeyV3 test = extendedH2OApi.uploadAndParse(input.trainingData().stream().filter(i -> i.fold() == -1).collect(Collectors.toList()));
+            FrameKeyV3 leaderBoardFrame = extendedH2OApi.uploadAndParse(input.trainingData().stream().filter(i -> i.fold() == -2).collect(Collectors.toList()));
+
             log.info("Uploaded data (train: {}, test: {})", train, test);
 
             //First training run to get variable importance.
             LeaderboardV99 resultPreliminary = extendedH2OApi.train(train, test, leaderBoardFrame, 5 * 60, ImmutableList.of());
 
-            ModelMetrics preliminaryMetrics = extendedH2OApi.metrics(resultPreliminary.models[0], test);
+            ModelMetrics preliminaryMetrics = extendedH2OApi.metrics(resultPreliminary.models[0], test, columns);
             log.info("Found preliminary model ({}) {} ", preliminaryMetrics, resultPreliminary.models[0]);
 
             //Only interesting result is removable variable instance (Any variable less important than random)
             List<String> lessOrEqualThanRandom = preliminaryMetrics.variableImportances().entrySet().stream().filter(
-                    e -> e.getValue() <= preliminaryMetrics.variableImportances().get("random")).map(Entry::getKey).collect(Collectors.toList());
+                    e -> e.getValue() <= preliminaryMetrics.variableImportances().get(Instance.NAME_RANDOM)).map(Entry::getKey).collect(Collectors.toList());
 
             //Train again, without uninteresting variables
             LeaderboardV99 resultFinal = extendedH2OApi.train(train, test, leaderBoardFrame, 20 * 60, lessOrEqualThanRandom);
-            ModelMetrics metricsFinal = extendedH2OApi.metrics(resultFinal.models[0], test);
+            ModelMetrics metricsFinal = extendedH2OApi.metrics(resultFinal.models[0], test, columns);
             log.info("Found final model ({}) {} ", metricsFinal, resultFinal.models[0]);
 
             FrameKeyV3 predictableInstancesFrame = extendedH2OApi.uploadAndParse(input.predictionData());

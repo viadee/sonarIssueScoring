@@ -1,6 +1,6 @@
 package de.viadee.sonarIssueScoring.service.prediction.load;
 
-import static de.viadee.sonarIssueScoring.service.prediction.load.BaseCommit.DiffType.*;
+import static de.viadee.sonarIssueScoring.service.prediction.load.Commit.DiffType.*;
 import static org.eclipse.jgit.diff.DiffEntry.ChangeType;
 import static org.eclipse.jgit.diff.DiffEntry.scan;
 
@@ -9,11 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import javax.annotation.Nullable;
 
@@ -31,7 +27,7 @@ import org.springframework.stereotype.Service;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 
-import de.viadee.sonarIssueScoring.service.prediction.load.BaseCommit.DiffType;
+import de.viadee.sonarIssueScoring.service.prediction.load.Commit.DiffType;
 
 /**
  * Transforms a JGit Repository in a linearized history of commits

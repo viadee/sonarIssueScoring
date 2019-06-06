@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 
 import de.viadee.sonarIssueScoring.service.PredictionParams;
 import de.viadee.sonarIssueScoring.service.desirability.ServerInfo;
-import de.viadee.sonarIssueScoring.service.desirability.ServerInfo.Builder;
 import de.viadee.sonarIssueScoring.service.prediction.EvaluationResult;
 import de.viadee.sonarIssueScoring.service.prediction.PredictionService;
 
@@ -23,31 +22,22 @@ public class Evaluator implements ApplicationRunner {
     /**
      * Evaluates the prediction quality versus the actual future on a given sample project.
      */
-    @Override
-    public void run(ApplicationArguments args) {
+    @Override public void run(ApplicationArguments args) {
         if (willRunEvaluation(args)) {
             log.info("Starting evaluation. No web server is started."); //Web server is disabled in SonarIssueScoringApplication
 
-            Builder builder = ServerInfo.builder();
-
-            if (args.containsOption("repo"))
-                builder.url(args.getOptionValues("repo").get(0));
-            else {
+            String repo = args.containsOption("repo") ? args.getOptionValues("repo").get(0) : null;
+            if (repo == null) {
                 log.info("No repository provided, using default");
-                builder.url("https://github.com/apache/commons-lang");
+                repo = "https://github.com/apache/commons-lang";
             }
 
-            if (args.containsOption("user"))
-                builder.user(args.getOptionValues("user").get(0));
+           String user = args.containsOption("user") ? args.getOptionValues("user").get(0) : null;
+         String password = args.containsOption("password") ? args.getOptionValues("password").get(0) : null;
 
-            if (args.containsOption("password"))
-                builder.password(args.getOptionValues("password").get(0));
+            int horizon = args.containsOption("horizon") ? Integer.parseInt(args.getOptionValues("horizon").get(0)) : 384;
 
-            int horizon = 384;
-            if (args.containsOption("horizon"))
-                horizon = Integer.parseInt(args.getOptionValues("horizon").get(0));
-
-            ServerInfo server = builder.build();
+            ServerInfo server = ServerInfo.of(repo, user, password);
 
             log.info("Running evaluation for {} with horizon", predictionService); //Password is redacted automatically
             EvaluationResult result = predictionService.evaluate(PredictionParams.of(server, horizon), "http://localhost:54321");

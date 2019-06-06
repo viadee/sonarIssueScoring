@@ -1,7 +1,8 @@
 package de.viadee.sonarIssueScoring.service.sonar;
 
-import com.google.common.collect.ImmutableList;
-import de.viadee.sonarIssueScoring.service.desirability.ServerInfo;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.sonarqube.ws.Issues.Issue;
 import org.sonarqube.ws.Issues.SearchWsResponse;
 import org.sonarqube.ws.client.HttpConnector;
@@ -9,8 +10,9 @@ import org.sonarqube.ws.client.issues.IssuesService;
 import org.sonarqube.ws.client.issues.SearchRequest;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.google.common.collect.ImmutableList;
+
+import de.viadee.sonarIssueScoring.service.desirability.ServerInfo;
 
 @Service
 public class SonarIssueSource {

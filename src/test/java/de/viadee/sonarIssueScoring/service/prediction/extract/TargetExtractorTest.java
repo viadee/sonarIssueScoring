@@ -1,6 +1,7 @@
 package de.viadee.sonarIssueScoring.service.prediction.extract;
 
-import static de.viadee.sonarIssueScoring.service.prediction.load.BaseCommit.DiffType.*;
+
+import static de.viadee.sonarIssueScoring.service.prediction.load.Commit.DiffType.*;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;

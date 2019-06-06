@@ -1,17 +1,17 @@
 package de.viadee.sonarIssueScoring.service.prediction;
 
+import java.util.List;
+
+import org.springframework.stereotype.Component;
+
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
+
 import de.viadee.sonarIssueScoring.service.prediction.extract.FeatureExtractor;
+import de.viadee.sonarIssueScoring.service.prediction.extract.Output;
 import de.viadee.sonarIssueScoring.service.prediction.extract.TargetExtractor;
 import de.viadee.sonarIssueScoring.service.prediction.load.PastFuturePair;
 import de.viadee.sonarIssueScoring.service.prediction.load.Repo;
 import de.viadee.sonarIssueScoring.service.prediction.train.Instance;
-import de.viadee.sonarIssueScoring.service.prediction.train.Instance.Builder;
-import org.springframework.stereotype.Component;
-
-import java.nio.file.Path;
-import java.util.List;
 
 /**
  * Extracts a list of instances out of extracted Repo / Commit data
@@ -26,31 +26,23 @@ public class InstanceSource {
         this.targetExtractor = targetExtractor;
     }
 
-    private ImmutableMap<Path, Builder> createBuilders(Repo past) {
-        ImmutableMap<Path, Builder> output = past.currentContent().keySet().stream().collect(
-                ImmutableMap.toImmutableMap(path -> path, path -> Instance.builder().path(path)));
-
-        featureExtractors.forEach(extractor -> extractor.extractFeatures(past, output));
-
-        return output;
-    }
-
-    private static List<Instance> finalizeInstances(ImmutableMap<Path, Builder> builders) {
-        return builders.values().stream().map(Builder::build).collect(ImmutableList.toImmutableList());
+    private List<Instance> create(Repo past) {
+        Output out = new Output(past.currentContent().keySet());
+        featureExtractors.forEach(extractor -> extractor.extractFeatures(past, out));
+        return out.build();
     }
 
     /** Extracts instances for a repository representing the past, with an unknown future (target and fold value are meaningless) */
     public List<Instance> extractInstances(Repo past) {
-        ImmutableMap<Path, Builder> builders = createBuilders(past);
-        targetExtractor.fillDummyTargetValues(builders);
-        return finalizeInstances(builders);
+        return create(past);
     }
 
-    public List<Instance> extractInstances(List<PastFuturePair> pastFuturePair) {
-        return pastFuturePair.stream().flatMap(pair -> {
-            ImmutableMap<Path, Builder> output = createBuilders(pair.past());
-            targetExtractor.extractTargetVariable(pair.future(), output);
-            return finalizeInstances(output).stream();
+    public List<Instance> extractInstances(List<PastFuturePair> pairs) {
+        return pairs.stream().flatMap(pair -> {
+            Output out = new Output(pair.past().currentContent().keySet());
+            featureExtractors.forEach(extractor -> extractor.extractFeatures(pair.past(), out));
+            targetExtractor.extractTargetVariable(pair.future(), out);
+            return out.build().stream();
         }).collect(ImmutableList.toImmutableList());
     }
 }

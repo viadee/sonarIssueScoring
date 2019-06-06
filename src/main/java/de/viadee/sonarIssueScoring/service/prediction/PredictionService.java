@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableTable;
 import com.google.common.math.PairedStatsAccumulator;
@@ -56,7 +57,7 @@ public class PredictionService {
 
         // Collect predicted vs actual future
         List<ResultPair> pairs = predictableInstances.stream().map(
-                instance -> new ResultPair(result.results().get(instance.path()).predictedChangeCount(), instance.targetEditCountPercentile())).collect(
+                instance -> new ResultPair(result.results().get(instance.path()).predictedChangeCount(), instance.target())).collect(
                 Collectors.toList());
 
         return EvaluationResult.of(rmse(pairs), r2(pairs), confusionMatrix(pairs));
@@ -71,7 +72,7 @@ public class PredictionService {
         return pairs.stream().collect(ImmutableTable.toImmutableTable(//
                 pair -> pair.actual >= thresholdActual, // Row = actual
                 pair -> pair.predicted >= thresholdPredicted, // Col == predicted
-                pair -> 1, (a, b) -> a + b));
+                pair -> 1, Integer::sum));
     }
 
     static double rmse(Collection<ResultPair> pair) {
@@ -84,6 +85,7 @@ public class PredictionService {
         return Math.pow(acc.pearsonsCorrelationCoefficient(), 2);
     }
 
+    @VisibleForTesting
     static class ResultPair {
         private final double predicted;
         private final double actual;

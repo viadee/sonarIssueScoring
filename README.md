@@ -11,7 +11,7 @@ This tool incorporates a prediction of which files in a repository will change, 
 
 ## Getting started
 
-Clone the repository, and execute `mvn install exec:java` in a command line. Additionally, a running [H2O-Server](https://h2o.ai) (version [3.24.0.4](http://h2o-release.s3.amazonaws.com/h2o/latest_stable.html) or greater) is required. 
+Clone the repository, and execute `mvn compile exec:java` in a command line. Additionally, a running [H2O-Server](https://h2o.ai) (version [3.24.0.4](http://h2o-release.s3.amazonaws.com/h2o/latest_stable.html) or greater) is required. 
 
 This is all required setup for [SonarQuest](https://github.com/viadee/sonarQuest), alternatively the REST-API can be used directly: 
 
@@ -76,8 +76,7 @@ This is primarily implemented in de.viadee.sonarIssueScoring.service.prediction,
 
 ## Development setup
 
-This project uses [org.immutables](https://immutables.github.io), which is an annotation processor.
-It might require [setup](https://immutables.github.io/apt.html) in an IDE.
+This is a standard maven project.
 
 ## License
 This project is licensed under the BSD 3-Clause "New" or "Revised" License - see the [LICENSE](LICENSE) file for details.

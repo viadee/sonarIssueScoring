@@ -4,11 +4,11 @@ import static com.google.common.base.Preconditions.*;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.StreamSupport;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,9 +17,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import com.fasterxml.jackson.dataformat.csv.CsvSchema;
-import com.fasterxml.jackson.dataformat.csv.CsvSchema.Column;
-import com.fasterxml.jackson.dataformat.csv.CsvSchema.ColumnType;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -27,19 +24,11 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Uninterruptibles;
 
 import de.viadee.sonarIssueScoring.service.prediction.ModelMetrics;
-import okhttp3.MediaType;
-import okhttp3.MultipartBody;
+import de.viadee.sonarIssueScoring.service.prediction.train.CsvConverter.CSVResult;
+import okhttp3.*;
 import okhttp3.MultipartBody.Builder;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
 import water.bindings.H2oApi;
-import water.bindings.pojos.ApiParseTypeValuesProvider;
-import water.bindings.pojos.FrameKeyV3;
-import water.bindings.pojos.LeaderboardV99;
-import water.bindings.pojos.ModelKeyV3;
-import water.bindings.pojos.ModelMetricsListSchemaV3;
-import water.bindings.pojos.ParseV3;
+import water.bindings.pojos.*;
 
 /**
  * Wraps the api to H2O, extending it with unsupported features around AutoML
@@ -53,7 +42,7 @@ class ExtendedH2oApi {
     private final ObjectMapper objectMapper;
     private final OkHttpClient client = new OkHttpClient();
 
-    public ExtendedH2oApi(CsvConverter csvConverter, ObjectMapper objectMapper, String h2oUrl) {
+    ExtendedH2oApi(CsvConverter csvConverter, ObjectMapper objectMapper, String h2oUrl) {
         this.h2oUrl = h2oUrl;
         checkArgument(!h2oUrl.endsWith("/"), "The url to h2o cannot end with a /");
         this.csvConverter = csvConverter;
@@ -61,21 +50,19 @@ class ExtendedH2oApi {
         this.h2oApi = new H2oApi(this.h2oUrl);
     }
 
-    public FrameKeyV3 uploadAndParse(List<Instance> instances) throws IOException {
-        FrameKeyV3 raw = postFile(csvConverter.asCSV(instances));
-
-        CsvSchema schema = csvConverter.schema();
+    public FrameKeyV3 uploadAndParse(Iterable<Instance> instances) throws IOException {
+        CSVResult csvResult = csvConverter.toCSV(instances);
+        FrameKeyV3 raw = postFile(csvResult.data());
 
         ParseV3 parseParms = new ParseV3();
         parseParms.sourceFrames = new FrameKeyV3[]{raw};
         parseParms.parseType = ApiParseTypeValuesProvider.CSV;
-        parseParms.separator = (byte) schema.getColumnSeparator();
+        parseParms.separator = (byte) ',';
         parseParms.checkHeader = 1;
         parseParms.deleteOnDone = true;
-        parseParms.numberColumns = schema.size();
-        parseParms.columnNames = StreamSupport.stream(schema.spliterator(), false).map(Column::getName).toArray(String[]::new);
-        parseParms.columnTypes = StreamSupport.stream(schema.spliterator(), false).map(col -> col.getType() == ColumnType.NUMBER ? "Numeric" : "Enum").toArray(
-                String[]::new);
+        parseParms.numberColumns = csvResult.colNames().length;
+        parseParms.columnNames = csvResult.colNames();
+        parseParms.columnTypes = csvResult.colTypes();
 
         parseParms.destinationFrame = H2oApi.stringToFrameKey(UUID.randomUUID() + ".hex");
         parseParms.blocking = true;
@@ -93,7 +80,7 @@ class ExtendedH2oApi {
 
 
         spec.putObject("input_spec").
-                put("response_column", "targetEditCountPercentile").
+                put("response_column", Instance.NAME_TARGET).
                 put("training_frame", train.name).
                 put("validation_frame", test.name).
                 put("leaderboard_frame", leaderBoardFrame.name).
@@ -150,7 +137,7 @@ class ExtendedH2oApi {
         return lines.stream().map(Double::valueOf).collect(ImmutableList.toImmutableList());
     }
 
-    public ModelMetrics metrics(ModelKeyV3 model, FrameKeyV3 frame) throws IOException {
+    public ModelMetrics metrics(ModelKeyV3 model, FrameKeyV3 frame, Set<String> colNames) throws IOException {
         //There is a method to get model metrics, but it only includes mse & rmse
         JsonNode metrics = execute(new Request.Builder().url(h2oUrl + "/3/ModelMetrics/models/" + model.name + "/frames/" + frame.name).get().build()).get(
                 "model_metrics").get(0);
@@ -162,8 +149,8 @@ class ExtendedH2oApi {
                 ImmutableMap.toImmutableMap(i -> importances.get(0).get(i).asText(), i -> nanToZero(importances.get(3).get(i).asDouble())));
 
         //Contains data for all features
-        ImmutableMap<String, Double> importanceMapAll = StreamSupport.stream(csvConverter.schema().spliterator(), false).map(Column::getName).filter(
-                col -> !col.startsWith("target") && !col.equals("fold") && !col.equals("path")).
+        ImmutableMap<String, Double> importanceMapAll = colNames.stream().
+                filter(col -> !col.equals(Instance.NAME_TARGET) && !col.equals(Instance.NAME_FOLD)).
                 collect(ImmutableMap.toImmutableMap(k -> k, k -> realImportanceMap.getOrDefault(k, 0.0)));
 
         return ModelMetrics.of(metrics.get("RMSE").asDouble(), metrics.get("r2").asDouble(), metrics.path("mean_residual_deviance").asDouble(), importanceMapAll);

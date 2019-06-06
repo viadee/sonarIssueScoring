@@ -3,12 +3,12 @@ package de.viadee.sonarIssueScoring.service.prediction.load;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 
 import de.viadee.sonarIssueScoring.service.PredictionParams;
-import de.viadee.sonarIssueScoring.service.prediction.load.SplitRepository.Builder;
 
 /**
  * Loads a git repository from the cache, and creates snapshots at different points in time
@@ -30,18 +30,18 @@ public class RepositoryLoader {
             return repositoryCache.readRepository(params.gitServer(), git -> {
                 List<Commit> history = commitHistoryReader.readCommits(git.getRepository());
 
-                Builder builder = SplitRepository.builder();
-                builder.completePast(commitHistorySplitter.createRepo(git.getRepository(), history));
+                Repo completePast = commitHistorySplitter.createRepo(git.getRepository(), history);
 
                 List<Integer> offsets = multiSampling.generateOffsets(params.predictionHorizon()).limit(10).boxed().collect(toImmutableList());
 
+                List<PastFuturePair> trainingData = new ArrayList<>();
                 for (Integer offset : offsets) {
                     if (offset + params.predictionHorizon() >= history.size())
                         break; //No more history - we are done
-                    builder.addTrainingData(commitHistorySplitter.splitCommits(git.getRepository(), history, offset, params.predictionHorizon()));
+                    trainingData.add(commitHistorySplitter.splitCommits(git.getRepository(), history, offset, params.predictionHorizon()));
                 }
 
-                return builder.build();
+              return   SplitRepository.of(completePast, trainingData);
             });
         } catch (IOException e) {
             throw new RuntimeException("Error while reading " + params, e);

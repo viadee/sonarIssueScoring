@@ -55,7 +55,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>24.0-jre</version>
+            <version>27.1-jre</version>
         </dependency>
         <dependency>
             <groupId>org.eclipse.jgit</groupId>
@@ -100,24 +100,17 @@
             <version>3.6.1</version>
         </dependency>
         <dependency>
-            <groupId>org.immutables</groupId>
-            <artifactId>value</artifactId>
-            <version>2.6.1</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
             <groupId>ai.h2o</groupId>
             <artifactId>h2o-bindings</artifactId>
             <version>3.24.0.4</version>
         </dependency>
-
-        <dependency>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
-            <artifactId>jackson-dataformat-csv</artifactId>
-        </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-guava</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-parameter-names</artifactId>
         </dependency>
     </dependencies>
 

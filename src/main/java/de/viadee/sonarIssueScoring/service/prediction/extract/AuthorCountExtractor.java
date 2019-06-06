@@ -1,18 +1,20 @@
 package de.viadee.sonarIssueScoring.service.prediction.extract;
 
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.Multiset;
-import de.viadee.sonarIssueScoring.service.prediction.load.Repo;
-import de.viadee.sonarIssueScoring.service.prediction.train.Instance.Builder;
-import org.springframework.stereotype.Component;
-
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.stereotype.Component;
+
+import com.google.common.collect.HashMultiset;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Multiset;
+
+import de.viadee.sonarIssueScoring.service.prediction.load.Repo;
+
 @Component
 public class AuthorCountExtractor implements FeatureExtractor {
-    @Override public void extractFeatures(Repo repo, Map<Path, Builder> output) {
+    @Override public void extractFeatures(Repo repo, Output out) {
         Map<Path, Multiset<String>> fileAuthors = new HashMap<>(); //All authors of a file, with the respective edit count
         Map<Path, String> lastAuthorPerFile = new HashMap<>();
         Multiset<String> totalAuthorCounts = HashMultiset.create(); //How many times each author changed any file. This is not the number of commits.
@@ -26,16 +28,15 @@ public class AuthorCountExtractor implements FeatureExtractor {
             });
         });
 
-        output.forEach((path, out) -> {
+        out.add(path -> {
             String lastAuthor = lastAuthorPerFile.get(path);
-            out.lastAuthor(lastAuthor);
-            out.previousAuthorTotalEdits(totalAuthorCounts.count(lastAuthor));
-
             Multiset<String> thisFileAuthors = fileAuthors.get(path);
-            out.totalEditCount(thisFileAuthors.size());
-            out.previousAuthorThisFileEdits(thisFileAuthors.count(lastAuthor));
-            out.totalEditCount(thisFileAuthors.size());
-            out.totalAuthorCount(thisFileAuthors.elementSet().size());
+            return ImmutableMap.<String, Object>of(//
+                    "lastAuthor", lastAuthor,//
+                    "previousAuthorTotalEdits", totalAuthorCounts.count(lastAuthor),//
+                    "totalEditCount", thisFileAuthors.size(),//
+                    "previousAuthorThisFileEdits", thisFileAuthors.count(lastAuthor),//
+                    "totalAuthorCount", thisFileAuthors.elementSet().size());
         });
     }
 }

@@ -1,5 +1,7 @@
 package de.viadee.sonarIssueScoring.service.prediction.load;
 
+import static de.viadee.sonarIssueScoring.service.prediction.load.Commit.DiffType.*;
+
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,8 +20,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import com.google.common.collect.ImmutableMap;
-
-import de.viadee.sonarIssueScoring.service.prediction.load.BaseCommit.DiffType;
 
 public class CommitHistoryReaderTest {
 
@@ -47,7 +47,7 @@ public class CommitHistoryReaderTest {
             Assert.assertEquals(7, read.size());
 
             for (int i = read.size() - 1; i >= 0; i--) {
-                Assert.assertEquals(ImmutableMap.of(Paths.get((read.size() - i - 1) + ".java"), DiffType.ADDED), read.get(i).diffs());
+                Assert.assertEquals(ImmutableMap.of(Paths.get((read.size() - i - 1) + ".java"), ADDED), read.get(i).diffs());
             }
         }
     }
@@ -86,9 +86,9 @@ public class CommitHistoryReaderTest {
             List<Commit> read = new CommitHistoryReader(new TreeFilterSource()).readCommits(git.getRepository());
 
             Assert.assertEquals(3, read.size());
-            Assert.assertEquals(ImmutableMap.of(Paths.get("1.java"), DiffType.ADDED), read.get(2).diffs());
-            Assert.assertEquals(ImmutableMap.of(Paths.get("1.java"), DiffType.MODIFIED), read.get(1).diffs());
-            Assert.assertEquals(ImmutableMap.of(Paths.get("1.java"), DiffType.DELETED), read.get(0).diffs());
+            Assert.assertEquals(ImmutableMap.of(Paths.get("1.java"), ADDED), read.get(2).diffs());
+            Assert.assertEquals(ImmutableMap.of(Paths.get("1.java"), MODIFIED), read.get(1).diffs());
+            Assert.assertEquals(ImmutableMap.of(Paths.get("1.java"), DELETED), read.get(0).diffs());
         }
     }
 
