@@ -6,7 +6,10 @@ import java.util.Locale;
 import java.util.Map;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Ordering;
+
+import de.viadee.sonarIssueScoring.service.prediction.ModelMetrics;
 
 public class StringTableFormatter {
     public static String formatData(String title, String keyHeader, String valueHeader, Map<String, Double> data, boolean orderDesc) {
@@ -24,5 +27,11 @@ public class StringTableFormatter {
             out += String.format(Locale.US, "%" + keyColLength + "s | %.3f\n", key, data.get(key));
 
         return out + "\n";
+    }
+
+    public static String formatModelMetrics(String type, ModelMetrics in) {
+        Map<String, Double> metrics = ImmutableMap.of("RMSE", in.rmse(), "R2", in.r2(), "MeanResidualDeviance", in.meanResidualDeviance());
+        return formatData(type + " Metrics", "Metric", "Value", metrics, false) +//
+                formatData(type + "variable importances", "Variable", "Importance", in.variableImportances(), true);
     }
 }

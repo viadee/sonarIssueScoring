@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableTable;
 import com.google.common.math.PairedStatsAccumulator;
 import com.google.common.math.Quantiles;
@@ -46,43 +45,33 @@ public class PredictionService {
         PredictionResult result = mlService.predict(mlInput);
 
         // Collect predicted vs actual future
-        List<ResultPair> pairs = mlInput.predictionData().stream().map(
-                instance -> new ResultPair(result.results().get(instance.path()).predictedChangeCount(), instance.target())).collect(Collectors.toList());
+        List<EvaluationResultPath> pairs = mlInput.predictionData().stream().map(
+                instance -> EvaluationResultPath.of(instance.path(), result.results().get(instance.path()).predictedChangeCount(), instance.target())).
+                collect(Collectors.toList());
 
-        return EvaluationResult.of(rmse(pairs), r2(pairs), confusionMatrix(pairs));
+        return EvaluationResult.of(result.validationMetrics(), rmse(pairs), r2(pairs), confusionMatrix(pairs), pairs);
     }
 
-    static ImmutableTable<Boolean, Boolean, Integer> confusionMatrix(Collection<ResultPair> pairs) {
+    static ImmutableTable<Boolean, Boolean, Integer> confusionMatrix(Collection<EvaluationResultPath> pairs) {
         //Identify commonly-edited files: all files edited more than the percentile below
         ScaleAndIndex requirement = Quantiles.percentiles().index(80);
-        double thresholdActual = requirement.computeInPlace(pairs.stream().mapToDouble(p -> p.actual).toArray());
-        double thresholdPredicted = requirement.computeInPlace(requirement.computeInPlace(pairs.stream().mapToDouble(p -> p.predicted).toArray()));
+        double thresholdActual = requirement.computeInPlace(pairs.stream().mapToDouble(EvaluationResultPath::actual).toArray());
+        double thresholdPredicted = requirement.computeInPlace(requirement.computeInPlace(pairs.stream().mapToDouble(EvaluationResultPath::predicted).toArray()));
 
         return pairs.stream().collect(ImmutableTable.toImmutableTable(//
-                pair -> pair.actual >= thresholdActual, // Row = actual
-                pair -> pair.predicted >= thresholdPredicted, // Col == predicted
+                pair -> pair.actual() >= thresholdActual, // Row = actual
+                pair -> pair.predicted() >= thresholdPredicted, // Col == predicted
                 pair -> 1, Integer::sum));
     }
 
-    static double rmse(Collection<ResultPair> pair) {
-        return Math.sqrt(pair.stream().mapToDouble(p -> Math.pow(p.actual - p.predicted, 2)).average().orElse(0));
+    static double rmse(Collection<EvaluationResultPath> pair) {
+        return Math.sqrt(pair.stream().mapToDouble(p -> Math.pow(p.actual() - p.predicted(), 2)).average().orElse(0));
     }
 
-    static double r2(Collection<ResultPair> pair) {
+    static double r2(Collection<EvaluationResultPath> pair) {
         PairedStatsAccumulator acc = new PairedStatsAccumulator();
-        pair.forEach(p -> acc.add(p.actual, p.predicted));
+        pair.forEach(p -> acc.add(p.actual(), p.predicted()));
         return Math.pow(acc.pearsonsCorrelationCoefficient(), 2);
-    }
-
-    @VisibleForTesting
-    static class ResultPair {
-        private final double predicted;
-        private final double actual;
-
-        ResultPair(double predicted, double actual) {
-            this.predicted = predicted;
-            this.actual = actual;
-        }
     }
 }
 

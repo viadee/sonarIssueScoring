@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 import com.google.common.collect.ImmutableMap;
 
 import de.viadee.sonarIssueScoring.service.prediction.FileInformation;
-import de.viadee.sonarIssueScoring.service.prediction.ModelMetrics;
 import de.viadee.sonarIssueScoring.service.prediction.PredictionResult;
 
 @Component
@@ -19,14 +18,7 @@ public class PredictionResultMessageConverterPlaintext extends ToStringMessageCo
     }
 
     @Override protected String write(PredictionResult res) {
-        return formatValidationMetrics(res.validationMetrics()) +//
-                StringTableFormatter.formatData("Variable Importances", "Variable", "Importance", res.validationMetrics().variableImportances(), true) +//
-                formatResults(res.results());
-    }
-
-    private static String formatValidationMetrics(ModelMetrics m) {
-        Map<String, Double> metrics = ImmutableMap.of("RMSE", m.rmse(), "R2", m.r2(), "MeanResidualDeviance", m.meanResidualDeviance());
-        return StringTableFormatter.formatData("Validation Metrics", "Metric", "Value", metrics, false);
+        return StringTableFormatter.formatModelMetrics("Validation", res.validationMetrics()) + formatResults(res.results());
     }
 
     private static String formatResults(Map<Path, FileInformation> data) {

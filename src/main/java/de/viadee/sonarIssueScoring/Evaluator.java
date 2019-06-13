@@ -10,14 +10,20 @@ import de.viadee.sonarIssueScoring.service.PredictionParams;
 import de.viadee.sonarIssueScoring.service.desirability.ServerInfo;
 import de.viadee.sonarIssueScoring.service.prediction.EvaluationResult;
 import de.viadee.sonarIssueScoring.service.prediction.PredictionService;
+import de.viadee.sonarIssueScoring.web.EvaluationResultPrinter;
+import de.viadee.sonarIssueScoring.web.PredictionResultMessageConverterPlaintext;
 
 @Component
 public class Evaluator implements ApplicationRunner {
     private static final Logger log = LoggerFactory.getLogger(Evaluator.class);
 
     private final PredictionService predictionService;
+    private final PredictionResultMessageConverterPlaintext prettyPrinter;
 
-    public Evaluator(PredictionService predictionService) {this.predictionService = predictionService;}
+    public Evaluator(PredictionService predictionService, PredictionResultMessageConverterPlaintext prettyPrinter) {
+        this.predictionService = predictionService;
+        this.prettyPrinter = prettyPrinter;
+    }
 
     /**
      * Evaluates the prediction quality versus the actual future on a given sample project.
@@ -32,8 +38,8 @@ public class Evaluator implements ApplicationRunner {
                 repo = "https://github.com/apache/commons-lang";
             }
 
-           String user = args.containsOption("user") ? args.getOptionValues("user").get(0) : null;
-         String password = args.containsOption("password") ? args.getOptionValues("password").get(0) : null;
+            String user = args.containsOption("user") ? args.getOptionValues("user").get(0) : null;
+            String password = args.containsOption("password") ? args.getOptionValues("password").get(0) : null;
 
             int horizon = args.containsOption("horizon") ? Integer.parseInt(args.getOptionValues("horizon").get(0)) : 384;
 
@@ -41,7 +47,7 @@ public class Evaluator implements ApplicationRunner {
 
             log.info("Running evaluation for {} with horizon", predictionService); //Password is redacted automatically
             EvaluationResult result = predictionService.evaluate(PredictionParams.of(server, horizon), "http://localhost:54321");
-            log.info("Evaluation result {}", result);
+            log.info("Evaluation result: \n{}", EvaluationResultPrinter.asString(result));
         }
     }
 
