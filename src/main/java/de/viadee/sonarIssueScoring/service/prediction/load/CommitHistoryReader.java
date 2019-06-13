@@ -35,29 +35,36 @@ import de.viadee.sonarIssueScoring.service.prediction.load.Commit.DiffType;
 @Service
 class CommitHistoryReader {
     private final TreeFilterSource treeFilterSource;
+    private final RepositorySnapshotCreator snapshotCreator;
 
-    CommitHistoryReader(TreeFilterSource treeFilterSource) { this.treeFilterSource = treeFilterSource;}
+    CommitHistoryReader(TreeFilterSource treeFilterSource, RepositorySnapshotCreator snapshotCreator) {
+        this.treeFilterSource = treeFilterSource;
+        this.snapshotCreator = snapshotCreator;
+    }
 
     /**
      * Reads all commits to the currently active (->master) branch.
      * Any commit not done on the master branch is excluded, only their merge commits are included
      * <pre>
      *     |
-     *     * Commit (included)
+     *     * Commit D (included)
      *     |
-     *     * Merge commit (included)
+     *     * Merge commit C (included)
      *     | \
      *     |  * Commit (excluded)
      *     |  |
-     *     *  | Commit (included)
+     *     *  | Commit B (included)
      *     | /
-     *     * Commit (included)
+     *     * Commit A (included)
      *     |
      * </pre>
+     *
+     * Results in the list [A, B, C, D]
      */
     public List<Commit> readCommits(Repository repo) throws IOException {
         List<Commit> history = new ArrayList<>();
 
+        //This implementation walks backwards from the head, the list is revered immediately before returning
         try (RevWalk revWalk = new RevWalk(repo)) {
             RevFlag flagMainBranch = revWalk.newFlag("mainBranch");
 
@@ -88,12 +95,30 @@ class CommitHistoryReader {
             if (current != null) //Create a difference to the initially empty repo
                 createCommitWithDiff(repo, current, null).ifPresent(history::add);
         }
-        return ImmutableList.copyOf(history);
+        //Reverse the commits, so the initial commit is at position 0
+        return ImmutableList.copyOf(history).reverse();
     }
 
     /** Creates a Commit object (containing a diff to the previous commit). If the previous commit is null, an empty tree will be used instead */
-    @VisibleForTesting
-    Optional<Commit> createCommitWithDiff(Repository repo, RevCommit current, @Nullable RevCommit previous) throws IOException {
+    @VisibleForTesting Optional<Commit> createCommitWithDiff(Repository repo, RevCommit current, @Nullable RevCommit previous) throws IOException {
+        Map<Path, DiffType> diffs = createDiffMap(repo, current, previous);
+        if (diffs.isEmpty())
+            return Optional.empty();  //We are using commit counts in the prediction, so ignore non-java commits entirely
+        Map<Path, String> snapshot = snapshotCreator.createSnapshot(repo, current);
+
+        // https://stackoverflow.com/questions/11856983/why-git-authordate-is-different-from-commitdate
+        // Committer time: Time the commit was last "modified", such as rebased
+        // Author time: Time the original commit was made. Does not change. This is used.
+        PersonIdent author = current.getAuthorIdent();
+
+        OffsetDateTime commitTime = author.getWhen().toInstant().atOffset(ZoneOffset.ofTotalSeconds(author.getTimeZoneOffset() * 60));
+        double partOfDay = (commitTime.getHour() * 60 + commitTime.getMinute()) / 1440.0;
+
+        return Optional.of(Commit.of(current.getId().name(), current.getFullMessage(), author.getEmailAddress(), partOfDay, commitTime.getDayOfWeek(), diffs, snapshot));
+    }
+
+    /** Creates a Commit object (containing a diff to the previous commit). If the previous commit is null, an empty tree will be used instead */
+    private Map<Path, DiffType> createDiffMap(Repository repo, RevCommit current, @Nullable RevCommit previous) throws IOException {
         try (TreeWalk treeWalk = new TreeWalk(repo)) {
             if (previous == null)
                 treeWalk.addTree(new EmptyTreeIterator());
@@ -103,9 +128,11 @@ class CommitHistoryReader {
             treeWalk.setFilter(treeFilterSource.getTreeFilter());
             treeWalk.setRecursive(true); //We don't care about directories
 
+            List<DiffEntry> diffEntries = scan(treeWalk);
+
             Map<Path, DiffType> diffs = new HashMap<>();
 
-            for (DiffEntry diff : scan(treeWalk)) {
+            for (DiffEntry diff : diffEntries) {
                 if (diff.getChangeType() == ChangeType.ADD)
                     diffs.put(Paths.get(diff.getNewPath()), ADDED);
                 else if (diff.getChangeType() == ChangeType.MODIFY)
@@ -115,19 +142,7 @@ class CommitHistoryReader {
                 else
                     throw new RuntimeException("Unexpected diff type: " + diff);
             }
-
-            if (diffs.isEmpty())
-                return Optional.empty(); //We are using commit counts in the prediction, so ignore non-java commits entirely
-
-            // https://stackoverflow.com/questions/11856983/why-git-authordate-is-different-from-commitdate
-            // Committer time: Time the commit was last "modified", such as rebased
-            // Author time: Time the original commit was made. Does not change. This is used.
-            PersonIdent author = current.getAuthorIdent();
-
-            OffsetDateTime commitTime = author.getWhen().toInstant().atOffset(ZoneOffset.ofTotalSeconds(author.getTimeZoneOffset() * 60));
-            double partOfDay = (commitTime.getHour() * 60 + commitTime.getMinute()) / 1440.0;
-
-            return Optional.of(Commit.of(current.getId().name(), current.getFullMessage(), author.getEmailAddress(), partOfDay, commitTime.getDayOfWeek(), diffs));
+            return diffs;
         }
     }
 }

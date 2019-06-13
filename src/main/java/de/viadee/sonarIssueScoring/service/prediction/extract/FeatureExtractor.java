@@ -1,10 +1,14 @@
 package de.viadee.sonarIssueScoring.service.prediction.extract;
 
-import de.viadee.sonarIssueScoring.service.prediction.load.Repo;
+import java.util.List;
+
+import de.viadee.sonarIssueScoring.service.prediction.load.Commit;
 
 public interface FeatureExtractor {
     /**
      * Extracts a number of features out of the repo
+     *
+     * @param commits All commits to the repository, starting with the inital commit, ending at HEAD
      */
-    public void extractFeatures(Repo repo, Output out);
+    public void extractFeatures(List<Commit> commits, Output out);
 }

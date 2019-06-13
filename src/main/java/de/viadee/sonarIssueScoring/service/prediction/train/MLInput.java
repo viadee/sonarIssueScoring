@@ -24,7 +24,7 @@ public final class MLInput {
         this.h2oUrl = Objects.requireNonNull(h2oUrl, "h2oUrl");
     }
 
-    public static MLInput of(List<Instance> trainingData, List<Instance> predictionData, String h2oUrl) {
+    public static MLInput of(List<Instance> trainingData, Iterable<Instance> predictionData, String h2oUrl) {
         return new MLInput(ImmutableList.copyOf(trainingData), ImmutableList.copyOf(predictionData), h2oUrl);
     }
 

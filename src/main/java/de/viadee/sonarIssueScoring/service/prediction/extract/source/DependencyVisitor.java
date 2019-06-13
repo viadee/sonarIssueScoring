@@ -14,110 +14,79 @@
  * limitations under the License.
  */
 
-package de.viadee.sonarIssueScoring.service.prediction.extract;
+package de.viadee.sonarIssueScoring.service.prediction.extract.source;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import org.eclipse.jdt.core.dom.ASTVisitor;
-import org.eclipse.jdt.core.dom.ArrayCreation;
-import org.eclipse.jdt.core.dom.CastExpression;
-import org.eclipse.jdt.core.dom.ClassInstanceCreation;
-import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.core.dom.FieldDeclaration;
-import org.eclipse.jdt.core.dom.IMethodBinding;
-import org.eclipse.jdt.core.dom.ITypeBinding;
-import org.eclipse.jdt.core.dom.InstanceofExpression;
-import org.eclipse.jdt.core.dom.MarkerAnnotation;
-import org.eclipse.jdt.core.dom.MethodDeclaration;
-import org.eclipse.jdt.core.dom.NormalAnnotation;
-import org.eclipse.jdt.core.dom.ParameterizedType;
-import org.eclipse.jdt.core.dom.ReturnStatement;
-import org.eclipse.jdt.core.dom.SingleMemberAnnotation;
-import org.eclipse.jdt.core.dom.ThrowStatement;
-import org.eclipse.jdt.core.dom.TypeDeclaration;
-import org.eclipse.jdt.core.dom.TypeLiteral;
-import org.eclipse.jdt.core.dom.VariableDeclarationStatement;
+import org.eclipse.jdt.core.dom.*;
 
 import com.github.mauricioaniche.ck.CKNumber;
 import com.github.mauricioaniche.ck.CKReport;
+import com.github.mauricioaniche.ck.metric.ClassInfo;
 import com.github.mauricioaniche.ck.metric.Metric;
-import com.google.common.collect.Multiset;
-import com.google.common.collect.SetMultimap;
 
 /**
  * This is mostly a copy of CBO.java from the CK library, which is licensed under Apache2
  */
 class DependencyVisitor extends ASTVisitor implements Metric {
-    private final Set<String> dependencies = new HashSet<>();
-    private final SetMultimap<String, String> references;
-    private final Multiset<String> comments;
+    private final DependencyGraph graph;
+    private String className;
 
-    public DependencyVisitor(SetMultimap<String, String> references, Multiset<String> comments) {
-        this.references = references;
-        this.comments = comments;
+    public DependencyVisitor(DependencyGraph graph) {
+        this.graph = graph;
     }
 
-    @Override
-    public boolean visit(VariableDeclarationStatement node) {
+    @Override public boolean visit(VariableDeclarationStatement node) {
         coupleTo(node.getType().resolveBinding());
         return super.visit(node);
     }
 
-    @Override
-    public boolean visit(ClassInstanceCreation node) {
+    @Override public boolean visit(ClassInstanceCreation node) {
         coupleTo(node.getType().resolveBinding());
         return super.visit(node);
     }
 
-    @Override
-    public boolean visit(ArrayCreation node) {
+    @Override public boolean visit(ArrayCreation node) {
         coupleTo(node.getType().resolveBinding());
         return super.visit(node);
     }
 
-    @Override
-    public boolean visit(FieldDeclaration node) {
+    @Override public boolean visit(FieldDeclaration node) {
         coupleTo(node.getType().resolveBinding());
         return super.visit(node);
     }
 
-    @Override
-    public boolean visit(ReturnStatement node) {
+    @Override public boolean visit(ReturnStatement node) {
         if (node.getExpression() != null)
             coupleTo(node.getExpression().resolveTypeBinding());
         return super.visit(node);
     }
 
-    @Override
-    public boolean visit(TypeLiteral node) {
+    @Override public boolean visit(TypeLiteral node) {
         coupleTo(node.resolveTypeBinding());
         coupleTo(node.getType().resolveBinding());
         return super.visit(node);
     }
 
-    @Override
-    public boolean visit(ThrowStatement node) {
+    @Override public boolean visit(ThrowStatement node) {
         coupleTo(node.getExpression().resolveTypeBinding());
         return super.visit(node);
     }
 
-    @Override
-    public boolean visit(TypeDeclaration node) {
+    @Override public boolean visit(TypeDeclaration node) {
         ITypeBinding type = node.resolveBinding();
 
-        ITypeBinding binding = type.getSuperclass();
-        if (binding != null)
-            coupleTo(binding);
+        if (type != null) {
+            ITypeBinding binding = type.getSuperclass();
+            if (binding != null)
+                coupleTo(binding);
 
-        for (ITypeBinding interfaces : type.getInterfaces())
-            coupleTo(interfaces);
+            for (ITypeBinding interfaces : type.getInterfaces())
+                coupleTo(interfaces);
+        }
 
         return super.visit(node);
     }
 
-    @Override
-    public boolean visit(MethodDeclaration node) {
+    @Override public boolean visit(MethodDeclaration node) {
 
         IMethodBinding method = node.resolveBinding();
         if (method == null)
@@ -131,15 +100,13 @@ class DependencyVisitor extends ASTVisitor implements Metric {
         return super.visit(node);
     }
 
-    @Override
-    public boolean visit(CastExpression node) {
+    @Override public boolean visit(CastExpression node) {
         coupleTo(node.getType().resolveBinding());
 
         return super.visit(node);
     }
 
-    @Override
-    public boolean visit(InstanceofExpression node) {
+    @Override public boolean visit(InstanceofExpression node) {
 
         coupleTo(node.getRightOperand().resolveBinding());
         coupleTo(node.getLeftOperand().resolveTypeBinding());
@@ -147,26 +114,22 @@ class DependencyVisitor extends ASTVisitor implements Metric {
         return super.visit(node);
     }
 
-    @Override
-    public boolean visit(NormalAnnotation node) {
+    @Override public boolean visit(NormalAnnotation node) {
         coupleTo(node.resolveTypeBinding());
         return super.visit(node);
     }
 
-    @Override
-    public boolean visit(MarkerAnnotation node) {
+    @Override public boolean visit(MarkerAnnotation node) {
         coupleTo(node.resolveTypeBinding());
         return super.visit(node);
     }
 
-    @Override
-    public boolean visit(SingleMemberAnnotation node) {
+    @Override public boolean visit(SingleMemberAnnotation node) {
         coupleTo(node.resolveTypeBinding());
         return super.visit(node);
     }
 
-    @Override
-    public boolean visit(ParameterizedType node) {
+    @Override public boolean visit(ParameterizedType node) {
         ITypeBinding binding = node.resolveBinding();
         if (binding == null)
             return super.visit(node);
@@ -189,12 +152,12 @@ class DependencyVisitor extends ASTVisitor implements Metric {
         while (resolved.isArray())
             resolved = resolved.getComponentType();
 
-        dependencies.add(resolved.getErasure().getQualifiedName());
+        graph.addDependency(className, resolved.getErasure().getQualifiedName());
 
         for (int i = 0; i < resolved.getTypeArguments().length; i++) {
             if (resolved.getTypeArguments()[i].isWildcardType() && resolved.getTypeArguments()[i].getBound() != null)
-                dependencies.add(clean(resolved.getTypeArguments()[i].getBound().getErasure().getQualifiedName()));
-            dependencies.add(clean(resolved.getTypeArguments()[i].getErasure().getQualifiedName())); //getErasure is not always returning a raw type
+                graph.addDependency(className, clean(resolved.getTypeArguments()[i].getBound().getErasure().getQualifiedName()));
+            graph.addDependency(className, clean(resolved.getTypeArguments()[i].getErasure().getQualifiedName())); //getErasure is not always returning a raw type
         }
     }
 
@@ -205,16 +168,15 @@ class DependencyVisitor extends ASTVisitor implements Metric {
         return in;
     }
 
-    @Override
-    public void execute(CompilationUnit cu, CKNumber number, CKReport report) {
-        cu.accept(this);
-        references.putAll(number.getClassName(), dependencies);
+    @Override public void execute(CompilationUnit cu, CKNumber result, CKReport report) {
+        ClassInfo classInfo = new ClassInfo();
+        cu.accept(classInfo);
+        className = classInfo.getClassName() == null ? "" : classInfo.getClassName();
 
-        comments.add(number.getFile(), cu.getCommentList().size());
+        cu.accept(this);
     }
 
-    @Override
-    public void setResult(CKNumber result) {
-        //No output to report
+    @Override public void setResult(CKNumber result) {
+        //Nothing to do
     }
 }

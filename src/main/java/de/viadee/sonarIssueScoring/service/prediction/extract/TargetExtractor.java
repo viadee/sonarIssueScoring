@@ -16,10 +16,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultiset;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multiset;
-import com.google.common.hash.Hashing;
 
 import de.viadee.sonarIssueScoring.service.prediction.load.Commit;
-import de.viadee.sonarIssueScoring.service.prediction.load.Repo;
 import de.viadee.sonarIssueScoring.service.prediction.train.Instance;
 
 /**
@@ -28,23 +26,29 @@ import de.viadee.sonarIssueScoring.service.prediction.train.Instance;
 @Service
 public class TargetExtractor {
 
-    @VisibleForTesting static Multiset<Path> createChangeHistogram(List<Commit> commits) {
-        return commits.stream().flatMap(c -> c.diffs().keySet().stream()).collect(ImmutableMultiset.toImmutableMultiset());
+    public void extractTrainingHelpers(Commit c, Output out) {
+        c.content().keySet().forEach(path -> out.add(c, path, Instance.NAME_RANDOM, Math.random()));
+        c.content().keySet().forEach(path -> out.add(c, path, Instance.NAME_FOLD, fold(path)));
     }
 
-    public void extractTargetVariable(Repo future, Output out) {
-        Multiset<Path> changeHistogram = createChangeHistogram(future.commits());
+    private int fold(Path p) {
+        //Hashing is used to make the assignment static
+        int split = new Random(p.hashCode()).nextInt(10) - 2;
+        return split > 0 ? split / 2 : split;
+    }
+
+    public void extractTargetVariable(Commit base, List<Commit> futureCommits, Output out) {
+        Multiset<Path> changeHistogram = createChangeHistogram(futureCommits);
         //Basically the same data as above, but this map does explicitly contain 0, making it useable for median calculations
-        Map<Path, Integer> pathCounts = Maps.toMap(out.paths(), changeHistogram::count);
+        Map<Path, Integer> pathCounts = Maps.toMap(base.content().keySet(), changeHistogram::count);
 
         Map<Path, Double> ranks = rank(pathCounts);
 
-        out.add(Instance.NAME_RANDOM, p -> Math.random());
-        out.add(Instance.NAME_FOLD, p -> {   //Hashing is used to make the assignment static
-            int split = new Random(Hashing.murmur3_128().hashUnencodedChars(p.toString()).asLong()).nextInt(10) - 2;
-            return split > 0 ? split / 2 : split;
-        });
-        out.add(Instance.NAME_TARGET, ranks::get);
+        base.content().keySet().forEach(path -> out.add(base, path, Instance.NAME_TARGET, ranks.get(path)));
+    }
+
+    @VisibleForTesting static Multiset<Path> createChangeHistogram(List<Commit> commits) {
+        return commits.stream().flatMap(c -> c.diffs().keySet().stream()).collect(ImmutableMultiset.toImmutableMultiset());
     }
 
     @VisibleForTesting static Map<Path, Double> rank(Map<Path, Integer> in) {

@@ -43,7 +43,7 @@ public class CsvConverter {
             return ColType.Numeric;
         if (e.getValue() instanceof String || e.getValue() instanceof Enum<?> || e.getValue() instanceof Boolean)
             return ColType.Enum;
-        throw new RuntimeException("Unexpected value: " + e.getValue() + " of type " + e.getValue().getClass());
+        throw new RuntimeException("Unexpected value: " + e.getValue() + " of type " + e.getValue().getClass() + " for key " + e.getKey());
     }
 
     public CSVResult toCSV(Iterable<Instance> instances) {

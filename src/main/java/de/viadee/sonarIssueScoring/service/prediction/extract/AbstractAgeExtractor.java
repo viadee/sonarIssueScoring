@@ -1,17 +1,16 @@
 package de.viadee.sonarIssueScoring.service.prediction.extract;
 
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.ListMultimap;
 
 import de.viadee.sonarIssueScoring.service.prediction.load.Commit;
-import de.viadee.sonarIssueScoring.service.prediction.load.Repo;
 
 /**
  * Extracts the age of the n-th last change to file = how many commits ago was the n-th last change.
@@ -26,21 +25,28 @@ import de.viadee.sonarIssueScoring.service.prediction.load.Repo;
  * CommitAge for B.Java for the 1-th last commit: 2
  */
 public abstract class AbstractAgeExtractor implements FeatureExtractor {
-    @Override public void extractFeatures(Repo repo, Output out) {
-        ListMultimap<Path, Integer> commitIndices = ArrayListMultimap.create(out.paths().size(), 4);
+    private static final int MAX_INDEX_LENGTH = Arrays.stream(CommitAge.values()).mapToInt(ca -> ca.offset + 1).max().orElse(-1);
 
-        ImmutableList<Commit> commits = repo.commits();
+    @Override public void extractFeatures(List<Commit> commits, Output out) {
+        ListMultimap<Path, Integer> commitIndices = ArrayListMultimap.create(500, 4);
 
+        for (int ci = 0; ci < commits.size(); ci++) {
+            int commitIndex = ci;//Effectively final
+            Commit commit = commits.get(commitIndex);
 
-        for (int i = 0; i < commits.size(); i++) {
-            Integer iFinal = i;
-            commits.get(i).diffs().keySet().stream().map(this::extractPath).distinct().forEach(path -> commitIndices.put(path, iFinal));
-        }
+            commit.diffs().forEach((path, type) -> {
+                List<Integer> previousCommitIndices = commitIndices.get(path);
+                previousCommitIndices.add(0, commitIndex);
+                while (previousCommitIndices.size() > MAX_INDEX_LENGTH)
+                    previousCommitIndices.remove(MAX_INDEX_LENGTH);
+            });
 
-        for (CommitAge age : CommitAge.values()) {
-            out.add(featureName() + "." + age, path -> {
-                List<Integer> commitList = commitIndices.get(extractPath(path));
-                return Iterables.get(commitList, age.offset(), Integer.MAX_VALUE);
+            commit.content().forEach((path, content) -> {
+                List<Integer> previousCommitIndices = commitIndices.get(path);
+                for (CommitAge age : CommitAge.values()) {
+                    Integer ageCommitIndex = Iterables.get(previousCommitIndices, age.offset, null);
+                    out.add(commit, path, featureName() + "." + age, ageCommitIndex == null ? commits.size() + 1 : commitIndex - ageCommitIndex);
+                }
             });
         }
     }
@@ -68,7 +74,7 @@ public abstract class AbstractAgeExtractor implements FeatureExtractor {
      * <p>
      * LastCommit is how many commits ago from the head a specific file was last changed
      */
-    public enum CommitAge {
+    private enum CommitAge {
         LastCommit(0),
         Minus1(1),
         Minus2(2),
@@ -81,7 +87,5 @@ public abstract class AbstractAgeExtractor implements FeatureExtractor {
         CommitAge(int offset) {
             this.offset = offset;
         }
-
-        public int offset() {return offset;}
     }
 }

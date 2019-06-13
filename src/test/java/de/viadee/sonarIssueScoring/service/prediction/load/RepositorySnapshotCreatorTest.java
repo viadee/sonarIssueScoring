@@ -38,7 +38,7 @@ public class RepositorySnapshotCreatorTest {
             commit(git, "this/file/is/ignored.java", "ignored");
 
 
-            Commit commit = Commit.of(commitId, "", "", 0, DayOfWeek.FRIDAY, ImmutableMap.of());
+            Commit commit = Commit.of(commitId, "", "", 0, DayOfWeek.FRIDAY, ImmutableMap.of(),ImmutableMap.of());
 
             Map<Path, String> expected = ImmutableMap.of(Paths.get("ide.java"), "ide", Paths.get("sata/is/superior.java"), "superior");
             Map<Path, String> read = new RepositorySnapshotCreator(new TreeFilterSource(), new StringCache()).createSnapshot(git.getRepository(), commit);

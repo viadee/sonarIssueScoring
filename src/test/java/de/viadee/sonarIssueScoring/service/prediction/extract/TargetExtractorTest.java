@@ -1,6 +1,5 @@
 package de.viadee.sonarIssueScoring.service.prediction.extract;
 
-
 import static de.viadee.sonarIssueScoring.service.prediction.load.Commit.DiffType.*;
 
 import java.nio.file.Path;
@@ -21,16 +20,14 @@ import de.viadee.sonarIssueScoring.service.prediction.load.Commit;
 public class TargetExtractorTest {
     private static final Path pathA = Paths.get("a"), pathB = Paths.get("b"), pathC = Paths.get("c"), pathD = Paths.get("d");
 
-    @Test
-    public void createChangeHistogram() {
+    @Test public void createChangeHistogram() {
         List<Commit> commits = ImmutableList.of(//
-                Commit.of("", "", "", 0, DayOfWeek.FRIDAY, ImmutableMap.of(pathA, ADDED, pathB, ADDED)),//
-                Commit.of("", "", "", 0, DayOfWeek.FRIDAY, ImmutableMap.of(pathB, MODIFIED, pathC, MODIFIED, pathD, DELETED)));
+                Commit.of("", "", "", 0, DayOfWeek.FRIDAY, ImmutableMap.of(pathA, ADDED, pathB, ADDED), ImmutableMap.of()),//
+                Commit.of("", "", "", 0, DayOfWeek.FRIDAY, ImmutableMap.of(pathB, MODIFIED, pathC, MODIFIED, pathD, DELETED), ImmutableMap.of()));
         Assert.assertEquals(ImmutableMultiset.of(pathA, pathB, pathB, pathC, pathD), TargetExtractor.createChangeHistogram(commits));
     }
 
-    @Test
-    public void percentileChanging() {
+    @Test public void percentileChanging() {
         ImmutableMap<Path, Integer> counts = ImmutableMap.<Path, Integer>builder().
                 put(Paths.get("a"), 0).
                 put(Paths.get("b"), 0).

@@ -34,7 +34,7 @@ class RepositorySnapshotCreator {
         return createSnapshot(repo, repo.parseCommit(repo.resolve(commit.id())));
     }
 
-    private ImmutableMap<Path, String> createSnapshot(Repository repo, RevCommit commitGit) throws IOException {
+    public ImmutableMap<Path, String> createSnapshot(Repository repo, RevCommit commitGit) throws IOException {
         log.trace("Creating snapshot for {}", commitGit);
         try (TreeWalk treeWalk = new TreeWalk(repo)) {
             treeWalk.addTree(commitGit.getTree());

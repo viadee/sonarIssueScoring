@@ -24,6 +24,7 @@ public final class Commit {
     private final double authorTime;
     private final DayOfWeek authorDay;
     private final ImmutableMap<Path, DiffType> diffs;
+    private final ImmutableMap<Path, String> content;
 
     public enum DiffType {
         ADDED,
@@ -31,17 +32,18 @@ public final class Commit {
         DELETED
     }
 
-    private Commit(String id, String message, String authorEmail, double authorTime, DayOfWeek authorDay, Map<Path, DiffType> diffs) {
+    private Commit(String id, String message, String authorEmail, double authorTime, DayOfWeek authorDay, Map<Path, DiffType> diffs, Map<Path, String> content) {
         this.id = Objects.requireNonNull(id, "id");
         this.message = Objects.requireNonNull(message, "message");
         this.authorEmail = Objects.requireNonNull(authorEmail, "authorEmail");
         this.authorTime = authorTime;
         this.authorDay = Objects.requireNonNull(authorDay, "authorDay");
         this.diffs = ImmutableMap.copyOf(diffs);
+        this.content = ImmutableMap.copyOf(content);
     }
 
-    public static Commit of(String id, String message, String authorEmail, double authorTime, DayOfWeek authorDay, Map<Path, DiffType> diffs) {
-        return new Commit(id, message, authorEmail, authorTime, authorDay, diffs);
+    public static Commit of(String id, String message, String authorEmail, double authorTime, DayOfWeek authorDay, Map<Path, DiffType> diffs, Map<Path, String> content) {
+        return new Commit(id, message, authorEmail, authorTime, authorDay, diffs, content);
     }
 
     public String id() {
@@ -71,6 +73,13 @@ public final class Commit {
         return diffs;
     }
 
+    /**
+     * Current content of the complete repository
+     */
+    public ImmutableMap<Path, String> content() {
+        return content;
+    }
+
     @Override public boolean equals(Object o) {
         if (this == o)
             return true;
@@ -78,11 +87,11 @@ public final class Commit {
             return false;
         Commit commit = (Commit) o;
         return Double.compare(commit.authorTime, authorTime) == 0 && id.equals(commit.id) && message.equals(commit.message) && authorEmail.equals(
-                commit.authorEmail) && authorDay == commit.authorDay && diffs.equals(commit.diffs);
+                commit.authorEmail) && authorDay == commit.authorDay && diffs.equals(commit.diffs) && content.equals(commit.content);
     }
 
     @Override public int hashCode() {
-        return Objects.hash(id, message, authorEmail, authorTime, authorDay, diffs);
+        return Objects.hash(id, message, authorEmail, authorTime, authorDay, diffs, content);
     }
 
     @Override public String toString() {

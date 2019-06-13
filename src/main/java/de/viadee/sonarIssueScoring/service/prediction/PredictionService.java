@@ -7,17 +7,15 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableTable;
 import com.google.common.math.PairedStatsAccumulator;
 import com.google.common.math.Quantiles;
 import com.google.common.math.Quantiles.ScaleAndIndex;
 
 import de.viadee.sonarIssueScoring.service.PredictionParams;
+import de.viadee.sonarIssueScoring.service.prediction.MlInputSource.Mode;
+import de.viadee.sonarIssueScoring.service.prediction.load.Commit;
 import de.viadee.sonarIssueScoring.service.prediction.load.RepositoryLoader;
-import de.viadee.sonarIssueScoring.service.prediction.load.SnapshotStrategy;
-import de.viadee.sonarIssueScoring.service.prediction.load.SplitRepository;
-import de.viadee.sonarIssueScoring.service.prediction.train.Instance;
 import de.viadee.sonarIssueScoring.service.prediction.train.MLInput;
 import de.viadee.sonarIssueScoring.service.prediction.train.MLService;
 
@@ -25,40 +23,31 @@ import de.viadee.sonarIssueScoring.service.prediction.train.MLService;
 public class PredictionService {
 
     private final RepositoryLoader repositoryLoader;
-    private final InstanceSource instanceSource;
+    private final MlInputSource mlInputSource;
     private final MLService mlService;
 
-    public PredictionService(RepositoryLoader repositoryLoader, InstanceSource instanceSource, MLService mlService) {
+    public PredictionService(RepositoryLoader repositoryLoader, MlInputSource mlInputSource, MLService mlService) {
         this.repositoryLoader = repositoryLoader;
-        this.instanceSource = instanceSource;
+        this.mlInputSource = mlInputSource;
         this.mlService = mlService;
     }
 
     public PredictionResult predict(PredictionParams params, String h2oServer) {
-        SplitRepository data = repositoryLoader.loadSplitRepository(params, SnapshotStrategy.OVERLAP_ALWAYS);
+        List<Commit> commits = repositoryLoader.loadSplitRepository(params);
 
-        List<Instance> instances = instanceSource.extractInstances(data.trainingData());
-        List<Instance> predictableInstances = instanceSource.extractInstances(data.completePast());
-
-        return mlService.predict(MLInput.of(instances, predictableInstances, h2oServer));
+        return mlService.predict(mlInputSource.createMLInput(commits, h2oServer, params.predictionHorizon(), Mode.ActualFuture));
     }
 
     /** Extract data and build a model for the past, and compare it with the more recent, not learned past to gauge prediction quality */
     public EvaluationResult evaluate(PredictionParams params, String h2oServer) {
-        SplitRepository data = repositoryLoader.loadSplitRepository(params, SnapshotStrategy.NO_OVERLAP_ON_MOST_RECENT);
-        //Use the most recent pastFuturePair as actual future, which has to be predicted. The SnapshotStrategy assures this future is not used as training data, even partially
+        List<Commit> commits = repositoryLoader.loadSplitRepository(params);
 
-        Preconditions.checkState(data.trainingData().size() > 1, "Not enough historical data");
-
-        List<Instance> instances = instanceSource.extractInstances(data.trainingData().subList(1, data.trainingData().size())); //Training data, based on past
-        List<Instance> predictableInstances = instanceSource.extractInstances(data.trainingData().subList(0, 1));
-
-        PredictionResult result = mlService.predict(MLInput.of(instances, predictableInstances, h2oServer));
+        MLInput mlInput = mlInputSource.createMLInput(commits, h2oServer, params.predictionHorizon(), Mode.Evaluate);
+        PredictionResult result = mlService.predict(mlInput);
 
         // Collect predicted vs actual future
-        List<ResultPair> pairs = predictableInstances.stream().map(
-                instance -> new ResultPair(result.results().get(instance.path()).predictedChangeCount(), instance.target())).collect(
-                Collectors.toList());
+        List<ResultPair> pairs = mlInput.predictionData().stream().map(
+                instance -> new ResultPair(result.results().get(instance.path()).predictedChangeCount(), instance.target())).collect(Collectors.toList());
 
         return EvaluationResult.of(rmse(pairs), r2(pairs), confusionMatrix(pairs));
     }
