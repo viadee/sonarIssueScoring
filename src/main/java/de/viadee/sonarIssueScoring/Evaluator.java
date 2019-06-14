@@ -1,5 +1,7 @@
 package de.viadee.sonarIssueScoring;
 
+import java.io.IOException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
@@ -11,24 +13,21 @@ import de.viadee.sonarIssueScoring.service.desirability.ServerInfo;
 import de.viadee.sonarIssueScoring.service.prediction.EvaluationResult;
 import de.viadee.sonarIssueScoring.service.prediction.PredictionService;
 import de.viadee.sonarIssueScoring.web.EvaluationResultPrinter;
-import de.viadee.sonarIssueScoring.web.PredictionResultMessageConverterPlaintext;
 
 @Component
 public class Evaluator implements ApplicationRunner {
     private static final Logger log = LoggerFactory.getLogger(Evaluator.class);
 
     private final PredictionService predictionService;
-    private final PredictionResultMessageConverterPlaintext prettyPrinter;
 
-    public Evaluator(PredictionService predictionService, PredictionResultMessageConverterPlaintext prettyPrinter) {
+    public Evaluator(PredictionService predictionService) {
         this.predictionService = predictionService;
-        this.prettyPrinter = prettyPrinter;
     }
 
     /**
      * Evaluates the prediction quality versus the actual future on a given sample project.
      */
-    @Override public void run(ApplicationArguments args) {
+    @Override public void run(ApplicationArguments args) throws IOException {
         if (willRunEvaluation(args)) {
             log.info("Starting evaluation. No web server is started."); //Web server is disabled in SonarIssueScoringApplication
 
@@ -49,7 +48,7 @@ public class Evaluator implements ApplicationRunner {
 
             log.info("Running evaluation for {} with horizon", predictionService); //Password is redacted automatically
 
-            EvaluationResult result = predictionService.evaluate(PredictionParams.of(server, horizon), h2o);
+            EvaluationResult result = predictionService.evaluate(PredictionParams.of(server, horizon), h2o, args.containsOption("dump-data"));
             log.info("Evaluation result: \n{}", EvaluationResultPrinter.asString(result));
         }
     }

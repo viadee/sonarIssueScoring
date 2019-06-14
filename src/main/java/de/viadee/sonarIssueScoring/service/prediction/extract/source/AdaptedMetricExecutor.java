@@ -28,10 +28,11 @@ public class AdaptedMetricExecutor extends MetricsExecutor {
         super.acceptAST(sourceFilePath, cu);
 
         CKNumber num = getReport().get(sourceFilePath);
-        if (num == null)
-            num = new CKNumber(null, "", null);
 
         Path path = root.relativize(Paths.get(sourceFilePath));
+
+        if (num == null) //Just guessing the classname
+            num = new CKNumber(null, path.getFileName().toString().replace(".java", ""), null);
 
         dependencyGraph.addClass(path, num.getClassName());
 

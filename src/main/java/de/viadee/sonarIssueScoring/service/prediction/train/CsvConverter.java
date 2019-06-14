@@ -69,12 +69,12 @@ public class CsvConverter {
         };
     }
 
-    interface CSVResult {
+    public interface CSVResult {
         String[] colNames();
 
         String[] colTypes();
 
-        byte[] data();
+        public byte[] data();
     }
 
     private String quote(String in) {
