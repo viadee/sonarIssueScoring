@@ -73,8 +73,8 @@ public class MlInputSource {
             featureExtractor.extractFeatures(commits, out);
         });
 
+        log.info("Starting extraction of target variable");
         for (int i = 0; i < commits.size() - horizon; i++) {
-            log.info("Starting extraction of target variable");
             targetExtractor.extractTargetVariable(commits.get(i), commits.subList(i + 1, i + horizon + 1), out);
             targetExtractor.extractTrainingHelpers(commits.get(i), out);
         }
