@@ -1,6 +1,5 @@
 package de.viadee.sonarIssueScoring.service.prediction.extract;
 
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -18,6 +17,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multiset;
 
 import de.viadee.sonarIssueScoring.service.prediction.load.Commit;
+import de.viadee.sonarIssueScoring.service.prediction.load.GitPath;
 import de.viadee.sonarIssueScoring.service.prediction.train.Instance;
 
 /**
@@ -31,30 +31,30 @@ public class TargetExtractor {
         c.content().keySet().forEach(path -> out.add(c, path, Instance.NAME_FOLD, fold(path)));
     }
 
-    private int fold(Path p) {
+    private int fold(GitPath p) {
         //Hashing is used to make the assignment static
         int split = new Random(p.hashCode()).nextInt(10) - 2;
         return split > 0 ? split / 2 : split;
     }
 
     public void extractTargetVariable(Commit base, List<Commit> futureCommits, Output out) {
-        Multiset<Path> changeHistogram = createChangeHistogram(futureCommits);
+        Multiset<GitPath> changeHistogram = createChangeHistogram(futureCommits);
         //Basically the same data as above, but this map does explicitly contain 0, making it useable for median calculations
-        Map<Path, Integer> pathCounts = Maps.toMap(base.content().keySet(), changeHistogram::count);
+        Map<GitPath, Integer> pathCounts = Maps.toMap(base.content().keySet(), changeHistogram::count);
 
-        Map<Path, Double> ranks = rank(pathCounts);
+        Map<GitPath, Double> ranks = rank(pathCounts);
 
         base.content().keySet().forEach(path -> out.add(base, path, Instance.NAME_TARGET, ranks.get(path)));
     }
 
-    @VisibleForTesting static Multiset<Path> createChangeHistogram(List<Commit> commits) {
+    @VisibleForTesting static Multiset<GitPath> createChangeHistogram(List<Commit> commits) {
         return commits.stream().flatMap(c -> c.diffs().keySet().stream()).collect(ImmutableMultiset.toImmutableMultiset());
     }
 
-    @VisibleForTesting static Map<Path, Double> rank(Map<Path, Integer> in) {
-        Path[] paths = in.keySet().toArray(new Path[0]);
+    @VisibleForTesting static Map<GitPath, Double> rank(Map<GitPath, Integer> in) {
+        GitPath[] paths = in.keySet().toArray(new GitPath[0]);
 
-        PercentilesScaledRanking ranking = new PercentilesScaledRanking(TiesStrategy.MINIMUM);
+        PercentilesScaledRanking ranking = new PercentilesScaledRanking();
         double[] ranks = ranking.rank(in.values().stream().mapToDouble(i -> i).toArray());
 
         return IntStream.range(0, paths.length).boxed().collect(ImmutableMap.toImmutableMap(i -> paths[i], i -> ranks[i]));
@@ -63,8 +63,8 @@ public class TargetExtractor {
     //https://stackoverflow.com/a/20908082
     private static class PercentilesScaledRanking extends NaturalRanking {
 
-        PercentilesScaledRanking(TiesStrategy tiesStrategy) {
-            super(NaNStrategy.FAILED, tiesStrategy);
+        PercentilesScaledRanking() {
+            super(NaNStrategy.FAILED, TiesStrategy.MINIMUM);
         }
 
         @Override public double[] rank(double[] data) {

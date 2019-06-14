@@ -1,6 +1,5 @@
 package de.viadee.sonarIssueScoring.service.prediction;
 
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,10 +9,12 @@ import org.junit.Test;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Table;
 
+import de.viadee.sonarIssueScoring.service.prediction.load.GitPath;
+
 public class PredictionServiceTest {
 
     private EvaluationResultPath pair(double a, double b) {
-        return EvaluationResultPath.of(Paths.get(""), a, b);
+        return EvaluationResultPath.of(GitPath.of(""), a, b);
     }
 
     @Test public void confusionMatrix() {

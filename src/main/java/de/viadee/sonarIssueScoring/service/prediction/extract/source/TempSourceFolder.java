@@ -14,29 +14,31 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.MoreFiles;
 import com.google.common.io.RecursiveDeleteOption;
 
+import de.viadee.sonarIssueScoring.service.prediction.load.GitPath;
+
 /**
  * Represents a source folder by writing the supplied map of file path and file content to a temporary directory.
  * Deletes it on closing.
  */
 class TempSourceFolder implements AutoCloseable {
     private final Path root;
-    private Map<Path, String> previous = ImmutableMap.of();
+    private Map<GitPath, String> previous = ImmutableMap.of();
 
     TempSourceFolder() throws IOException {
         root = Files.createTempDirectory("TempSourceFolder");
     }
 
-    public void update(Map<Path, String> current) throws IOException {
-        for (Path path : previous.keySet())
+    public void update(Map<GitPath, String> current) throws IOException {
+        for (GitPath path : previous.keySet())
             if (!current.containsKey(path))
-                Files.delete(root.resolve(path));
+                Files.delete(path.toActualPath(root));
 
-        for (Entry<Path, String> e : current.entrySet()) {
+        for (Entry<GitPath, String> e : current.entrySet()) {
 
             if (e.getValue().equals(previous.get(e.getKey())))
                 continue;
 
-            Path actualPath = root.resolve(e.getKey());
+            Path actualPath = e.getKey().toActualPath(root);
 
             checkState(actualPath.startsWith(root));
 
@@ -45,7 +47,7 @@ class TempSourceFolder implements AutoCloseable {
             Files.write(actualPath, e.getValue().getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE);
         }
 
-        previous = current;
+        previous = ImmutableMap.copyOf(current);
     }
 
     public Path root() {return root;}

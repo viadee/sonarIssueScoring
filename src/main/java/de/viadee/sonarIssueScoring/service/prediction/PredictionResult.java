@@ -1,6 +1,5 @@
 package de.viadee.sonarIssueScoring.service.prediction;
 
-import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
 
@@ -13,20 +12,22 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableMap;
 
+import de.viadee.sonarIssueScoring.service.prediction.load.GitPath;
+
 @ParametersAreNonnullByDefault
 @Immutable
 @CheckReturnValue
 @JsonSerialize
 public final class PredictionResult {
     private final ModelMetrics validationMetrics;
-    private final ImmutableMap<Path, FileInformation> results;
+    private final ImmutableMap<GitPath, FileInformation> results;
 
-    private PredictionResult(ModelMetrics validationMetrics, Map<Path, FileInformation> results) {
+    private PredictionResult(ModelMetrics validationMetrics, Map<GitPath, FileInformation> results) {
         this.validationMetrics = Objects.requireNonNull(validationMetrics, "validationMetrics");
         this.results = ImmutableMap.copyOf(results);
     }
 
-    public static PredictionResult of(ModelMetrics validationMetrics, Map<Path, FileInformation> results) {
+    public static PredictionResult of(ModelMetrics validationMetrics, Map<GitPath, FileInformation> results) {
         return new PredictionResult(validationMetrics, results);
     }
 
@@ -34,7 +35,7 @@ public final class PredictionResult {
         return validationMetrics;
     }
 
-    @JsonProperty public ImmutableMap<Path, FileInformation> results() {
+    @JsonProperty public ImmutableMap<GitPath, FileInformation> results() {
         return results;
     }
 

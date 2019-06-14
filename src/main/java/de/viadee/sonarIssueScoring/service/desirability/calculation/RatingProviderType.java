@@ -1,21 +1,22 @@
 package de.viadee.sonarIssueScoring.service.desirability.calculation;
 
-import com.google.common.collect.Multiset;
-import de.viadee.sonarIssueScoring.service.desirability.Rating;
-import de.viadee.sonarIssueScoring.service.desirability.RatingType;
-import de.viadee.sonarIssueScoring.service.desirability.UserPreferences;
-import de.viadee.sonarIssueScoring.service.prediction.PredictionResult;
 import org.sonarqube.ws.Common.RuleType;
 import org.sonarqube.ws.Issues.Issue;
 import org.springframework.stereotype.Component;
 
-import java.nio.file.Path;
+import com.google.common.collect.Multiset;
+
+import de.viadee.sonarIssueScoring.service.desirability.Rating;
+import de.viadee.sonarIssueScoring.service.desirability.RatingType;
+import de.viadee.sonarIssueScoring.service.desirability.UserPreferences;
+import de.viadee.sonarIssueScoring.service.prediction.PredictionResult;
+import de.viadee.sonarIssueScoring.service.prediction.load.GitPath;
 
 @Component
 public class RatingProviderType implements RatingProvider {
 
     @Override
-    public Rating createRating(Issue issue, PredictionResult predictionResult, Path realPath, UserPreferences userPreferences, Multiset<String> componentCounts) {
+    public Rating createRating(Issue issue, PredictionResult predictionResult, GitPath realPath, UserPreferences userPreferences, Multiset<String> componentCounts) {
         if (issue.getType() == RuleType.UNKNOWN || issue.getType() == RuleType.CODE_SMELL)
             return Rating.of(RatingType.RuleType, 1);
         if (issue.getType() == RuleType.VULNERABILITY)

@@ -1,8 +1,6 @@
 package de.viadee.sonarIssueScoring.service.prediction.load;
 
 import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.DayOfWeek;
 import java.util.Map;
 
@@ -40,8 +38,8 @@ public class RepositorySnapshotCreatorTest {
 
             Commit commit = Commit.of(commitId, "", "", 0, DayOfWeek.FRIDAY, ImmutableMap.of(),ImmutableMap.of());
 
-            Map<Path, String> expected = ImmutableMap.of(Paths.get("ide.java"), "ide", Paths.get("sata/is/superior.java"), "superior");
-            Map<Path, String> read = new RepositorySnapshotCreator(new TreeFilterSource(), new StringCache()).createSnapshot(git.getRepository(), commit);
+            Map<GitPath, String> expected = ImmutableMap.of(GitPath.of("ide.java"), "ide", GitPath.of("sata/is/superior.java"), "superior");
+            Map<GitPath, String> read = new RepositorySnapshotCreator(new TreeFilterSource(), new StringCache()).createSnapshot(git.getRepository(), commit);
             Assert.assertEquals(expected, read);
         }
     }

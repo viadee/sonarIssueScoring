@@ -2,8 +2,6 @@ package de.viadee.sonarIssueScoring.service.prediction.extract;
 
 import static de.viadee.sonarIssueScoring.service.prediction.load.Commit.DiffType.*;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.DayOfWeek;
 import java.util.List;
 import java.util.Map;
@@ -16,9 +14,10 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultiset;
 
 import de.viadee.sonarIssueScoring.service.prediction.load.Commit;
+import de.viadee.sonarIssueScoring.service.prediction.load.GitPath;
 
 public class TargetExtractorTest {
-    private static final Path pathA = Paths.get("a"), pathB = Paths.get("b"), pathC = Paths.get("c"), pathD = Paths.get("d");
+    private static final GitPath pathA = GitPath.of("a"), pathB = GitPath.of("b"), pathC = GitPath.of("c"), pathD = GitPath.of("d");
 
     @Test public void createChangeHistogram() {
         List<Commit> commits = ImmutableList.of(//
@@ -28,29 +27,29 @@ public class TargetExtractorTest {
     }
 
     @Test public void percentileChanging() {
-        ImmutableMap<Path, Integer> counts = ImmutableMap.<Path, Integer>builder().
-                put(Paths.get("a"), 0).
-                put(Paths.get("b"), 0).
-                put(Paths.get("c"), 0).
-                put(Paths.get("d"), 0).
-                put(Paths.get("e"), 0).
-                put(Paths.get("f"), 0).
-                put(Paths.get("g"), 1).
-                put(Paths.get("h"), 1).
-                put(Paths.get("i"), 1).
-                put(Paths.get("j"), 1).
-                put(Paths.get("k"), 1).
-                put(Paths.get("l"), 2).
-                put(Paths.get("m"), 2).
-                put(Paths.get("n"), 777).build();
+        ImmutableMap<GitPath, Integer> counts = ImmutableMap.<GitPath, Integer>builder().
+                put(GitPath.of("a"), 0).
+                put(GitPath.of("b"), 0).
+                put(GitPath.of("c"), 0).
+                put(GitPath.of("d"), 0).
+                put(GitPath.of("e"), 0).
+                put(GitPath.of("f"), 0).
+                put(GitPath.of("g"), 1).
+                put(GitPath.of("h"), 1).
+                put(GitPath.of("i"), 1).
+                put(GitPath.of("j"), 1).
+                put(GitPath.of("k"), 1).
+                put(GitPath.of("l"), 2).
+                put(GitPath.of("m"), 2).
+                put(GitPath.of("n"), 777).build();
 
-        Map<Path, Double> ranked = TargetExtractor.rank(counts);
+        Map<GitPath, Double> ranked = TargetExtractor.rank(counts);
 
         Assert.assertEquals(14, ranked.size());
 
-        Assert.assertEquals(0, ranked.get(Paths.get("a")), 1.0e-4);
-        Assert.assertEquals(0.4286, ranked.get(Paths.get("g")), 1.0e-4);
-        Assert.assertEquals(0.7857, ranked.get(Paths.get("l")), 1.0e-4);
-        Assert.assertEquals(0.9286, ranked.get(Paths.get("n")), 1.0e-4);
+        Assert.assertEquals(0, ranked.get(GitPath.of("a")), 1.0e-4);
+        Assert.assertEquals(0.4286, ranked.get(GitPath.of("g")), 1.0e-4);
+        Assert.assertEquals(0.7857, ranked.get(GitPath.of("l")), 1.0e-4);
+        Assert.assertEquals(0.9286, ranked.get(GitPath.of("n")), 1.0e-4);
     }
 }

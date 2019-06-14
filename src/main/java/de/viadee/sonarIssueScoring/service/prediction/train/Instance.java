@@ -1,6 +1,5 @@
 package de.viadee.sonarIssueScoring.service.prediction.train;
 
-import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
 
@@ -11,25 +10,27 @@ import javax.annotation.concurrent.Immutable;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableMap;
 
+import de.viadee.sonarIssueScoring.service.prediction.load.GitPath;
+
 @ParametersAreNonnullByDefault
 @Immutable
 @CheckReturnValue
 public class Instance {
     public static final String NAME_TARGET = "target", NAME_FOLD = "fold", NAME_RANDOM = "random", NAME_DEPENDANTS = "dependants";
 
-    private final Path path;
+    private final GitPath path;
     private final ImmutableMap<String, Object> data;
 
-    private Instance(Path path, ImmutableMap<String, Object> data) {
+    private Instance(GitPath path, ImmutableMap<String, Object> data) {
         this.path = path;
         this.data = data;
     }
 
-    public static Instance of(Path path, Map<String, Object> data) {
+    public static Instance of(GitPath path, Map<String, Object> data) {
         return new Instance(path, ImmutableMap.copyOf(data));
     }
 
-    public Path path() {return path;}
+    public GitPath path() {return path;}
 
     public int fold() {
         return (Integer) data.get(NAME_FOLD);

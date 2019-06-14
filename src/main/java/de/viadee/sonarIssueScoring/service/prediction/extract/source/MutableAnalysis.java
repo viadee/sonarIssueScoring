@@ -2,7 +2,6 @@ package de.viadee.sonarIssueScoring.service.prediction.extract.source;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Map;
 import java.util.function.BiConsumer;
 
@@ -15,11 +14,12 @@ import com.google.common.collect.Table;
 
 import de.viadee.sonarIssueScoring.service.prediction.load.Commit;
 import de.viadee.sonarIssueScoring.service.prediction.load.Commit.DiffType;
+import de.viadee.sonarIssueScoring.service.prediction.load.GitPath;
 
 // Maybe implement WorkingCopyOwner as a mutable file system
 class MutableAnalysis implements Closeable {
     private final TempSourceFolder sourceFolder = new TempSourceFolder();
-    private final Table<Path, String, Object> currentAnalysis = HashBasedTable.create();
+    private final Table<GitPath, String, Object> currentAnalysis = HashBasedTable.create();
     private final DependencyGraph dependencies = new DependencyGraph();
 
     MutableAnalysis() throws IOException {}
@@ -50,8 +50,8 @@ class MutableAnalysis implements Closeable {
 
         parser.setEnvironment(null, new String[]{sourceFolder.root().toString()}, new String[]{"UTF-8"}, true);
 
-        String[] srcs = c.diffs().entrySet().stream().filter(e -> e.getValue() != Commit.DiffType.DELETED).map(
-                e -> sourceFolder.root().resolve(e.getKey()).toString()).toArray(String[]::new);
+        String[] srcs = c.diffs().entrySet().stream().filter(e -> e.getValue() != DiffType.DELETED).map(
+                e -> e.getKey().toActualPath(sourceFolder.root()).toString()).toArray(String[]::new);
 
         AdaptedMetricExecutor executor = new AdaptedMetricExecutor(sourceFolder.root(), currentAnalysis, dependencies);
         parser.createASTs(srcs, null, new String[0], executor, null);
@@ -61,8 +61,8 @@ class MutableAnalysis implements Closeable {
         sourceFolder.close();
     }
 
-    public void addAnalysis(Path path, BiConsumer<String,Object> out) {
-        currentAnalysis.row(path).forEach(out::accept);
+    public void addAnalysis(GitPath path, BiConsumer<String, Object> out) {
+        currentAnalysis.row(path).forEach(out);
         dependencies.putMetrics(path, out);
     }
 }

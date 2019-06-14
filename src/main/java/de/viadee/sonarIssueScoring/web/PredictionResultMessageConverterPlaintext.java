@@ -1,6 +1,5 @@
 package de.viadee.sonarIssueScoring.web;
 
-import java.nio.file.Path;
 import java.util.Map;
 
 import org.springframework.stereotype.Component;
@@ -9,6 +8,7 @@ import com.google.common.collect.ImmutableMap;
 
 import de.viadee.sonarIssueScoring.service.prediction.FileInformation;
 import de.viadee.sonarIssueScoring.service.prediction.PredictionResult;
+import de.viadee.sonarIssueScoring.service.prediction.load.GitPath;
 
 @Component
 public class PredictionResultMessageConverterPlaintext extends ToStringMessageConverter<PredictionResult> {
@@ -21,7 +21,7 @@ public class PredictionResultMessageConverterPlaintext extends ToStringMessageCo
         return StringTableFormatter.formatModelMetrics("Validation", res.validationMetrics()) + formatResults(res.results());
     }
 
-    private static String formatResults(Map<Path, FileInformation> data) {
+    private static String formatResults(Map<GitPath, FileInformation> data) {
         ImmutableMap<String, Double> values = data.entrySet().stream().collect(
                 ImmutableMap.toImmutableMap(e -> e.getKey().toString(), e -> e.getValue().predictedChangeCount()));
         return StringTableFormatter.formatData("Predictions", "File", "Predicted change", values, true);

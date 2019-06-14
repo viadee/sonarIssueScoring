@@ -1,6 +1,5 @@
 package de.viadee.sonarIssueScoring.service.prediction.extract.source;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -12,24 +11,25 @@ import com.google.common.collect.SetMultimap;
 import com.google.common.graph.GraphBuilder;
 import com.google.common.graph.MutableGraph;
 
+import de.viadee.sonarIssueScoring.service.prediction.load.GitPath;
 import de.viadee.sonarIssueScoring.service.prediction.train.Instance;
 
-public class DependencyGraph {
-    private final MutableGraph<String> dependencies = GraphBuilder.<Path>directed().allowsSelfLoops(true).build();
-    private final Map<Path, String> pathToClass = new HashMap<>();
-    private final SetMultimap<String, Path> classesToPaths = HashMultimap.create();
+class DependencyGraph {
+    private final MutableGraph<String> dependencies = GraphBuilder.directed().allowsSelfLoops(true).build();
+    private final Map<GitPath, String> pathToClass = new HashMap<>();
+    private final SetMultimap<String, GitPath> classesToPaths = HashMultimap.create();
 
-    public void addClass(Path path, String clazz) {
+    void addClass(GitPath path, String clazz) {
         pathToClass.put(path, clazz);
         classesToPaths.put(clazz, path);
         dependencies.addNode(clazz);
     }
 
-    public void addDependency(String from, String to) {
+    void addDependency(String from, String to) {
         dependencies.putEdge(from, to);
     }
 
-    public void removeClass(Path path) {
+    void removeClass(GitPath path) {
         String clazz = pathToClass.remove(path);
 
         //Avoid ConcurrentModification
@@ -37,7 +37,7 @@ public class DependencyGraph {
         successors.forEach(out -> dependencies.removeEdge(clazz, out));
     }
 
-    public void putMetrics(Path path, BiConsumer<String, Object> out) {
+    void putMetrics(GitPath path, BiConsumer<String, Object> out) {
         String clazz = pathToClass.get(path);
 
         out.accept(Instance.NAME_DEPENDANTS, dependencies.predecessors(clazz).size());

@@ -4,7 +4,6 @@ import static com.google.common.base.Preconditions.*;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -22,6 +21,7 @@ import com.google.common.collect.ImmutableList;
 import de.viadee.sonarIssueScoring.service.prediction.FileInformation;
 import de.viadee.sonarIssueScoring.service.prediction.ModelMetrics;
 import de.viadee.sonarIssueScoring.service.prediction.PredictionResult;
+import de.viadee.sonarIssueScoring.service.prediction.load.GitPath;
 import water.bindings.pojos.FrameKeyV3;
 import water.bindings.pojos.LeaderboardV99;
 
@@ -74,7 +74,7 @@ public class H2oMLService implements MLService {
             FrameKeyV3 predictableInstancesFrame = extendedH2OApi.uploadAndParse(input.predictionData());
             List<Double> predictions = extendedH2OApi.predict(resultFinal.models[0], predictableInstancesFrame);
             extendedH2OApi.delete(predictableInstancesFrame);
-            Map<Path, FileInformation> predictionResult = IntStream.range(0, input.predictionData().size()).boxed().collect(
+            Map<GitPath, FileInformation> predictionResult = IntStream.range(0, input.predictionData().size()).boxed().collect(
                     toImmutableMap(i -> input.predictionData().get(i).path(), i -> FileInformation.of(predictions.get(i), input.predictionData().get(i).dependants())));
 
 

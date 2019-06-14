@@ -2,8 +2,6 @@ package de.viadee.sonarIssueScoring.service.prediction.load;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,24 +28,24 @@ class RepositorySnapshotCreator {
         this.stringCache = stringCache;
     }
 
-    public ImmutableMap<Path, String> createSnapshot(Repository repo, Commit commit) throws IOException {
+    public ImmutableMap<GitPath, String> createSnapshot(Repository repo, Commit commit) throws IOException {
         return createSnapshot(repo, repo.parseCommit(repo.resolve(commit.id())));
     }
 
-    public ImmutableMap<Path, String> createSnapshot(Repository repo, RevCommit commitGit) throws IOException {
+    public ImmutableMap<GitPath, String> createSnapshot(Repository repo, RevCommit commitGit) throws IOException {
         log.trace("Creating snapshot for {}", commitGit);
         try (TreeWalk treeWalk = new TreeWalk(repo)) {
             treeWalk.addTree(commitGit.getTree());
             treeWalk.setFilter(treeFilterSource.getTreeFilter());
             treeWalk.setRecursive(true); //We don't care about directories - this automatically enters them
 
-            Map<Path, String> content = new HashMap<>();
+            Map<GitPath, String> content = new HashMap<>();
 
             while (treeWalk.next()) {
                 //ObjectId 0 = objectId from the first (and only) tree
                 //UTF-8 should fit most files, some encoding errors are ok.
                 String fileContents = new String(repo.open(treeWalk.getObjectId(0)).getCachedBytes(), StandardCharsets.UTF_8);
-                content.put(Paths.get(stringCache.deduplicate(treeWalk.getPathString())), stringCache.deduplicate(fileContents));
+                content.put(GitPath.of(stringCache.deduplicate(treeWalk.getPathString())), stringCache.deduplicate(fileContents));
             }
 
             return ImmutableMap.copyOf(content);

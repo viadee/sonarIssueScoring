@@ -12,12 +12,14 @@ import com.github.mauricioaniche.ck.metric.WMC;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Table;
 
-public class AdaptedMetricExecutor extends MetricsExecutor {
+import de.viadee.sonarIssueScoring.service.prediction.load.GitPath;
+
+class AdaptedMetricExecutor extends MetricsExecutor {
     private final Path root;
-    private final Table<Path, String, Object> output;
+    private final Table<GitPath, String, Object> output;
     private final DependencyGraph dependencyGraph;
 
-    public AdaptedMetricExecutor(Path root, Table<Path, String, Object> output, DependencyGraph dependencyGraph) {
+    AdaptedMetricExecutor(Path root, Table<GitPath, String, Object> output, DependencyGraph dependencyGraph) {
         super(() -> ImmutableList.of(new WMC(), new NOM(), new DependencyVisitor(dependencyGraph)));
         this.root = root;
         this.output = output;
@@ -29,10 +31,10 @@ public class AdaptedMetricExecutor extends MetricsExecutor {
 
         CKNumber num = getReport().get(sourceFilePath);
 
-        Path path = root.relativize(Paths.get(sourceFilePath));
+        GitPath path = GitPath.ofRealPath(root, Paths.get(sourceFilePath));
 
         if (num == null) //Just guessing the classname
-            num = new CKNumber(null, path.getFileName().toString().replace(".java", ""), null);
+            num = new CKNumber(null, path.fileName().replace(".java", ""), null);
 
         dependencyGraph.addClass(path, num.getClassName());
 

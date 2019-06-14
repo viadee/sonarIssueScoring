@@ -1,6 +1,5 @@
 package de.viadee.sonarIssueScoring.service.prediction.extract;
 
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,12 +10,13 @@ import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
 
 import de.viadee.sonarIssueScoring.service.prediction.load.Commit;
+import de.viadee.sonarIssueScoring.service.prediction.load.GitPath;
 
 @Component
 public class AuthorCountExtractor implements FeatureExtractor {
     @Override public void extractFeatures(List<Commit> commits, Output out) {
-        Map<Path, Multiset<String>> fileAuthors = new HashMap<>(); //All authors of a file, with the respective edit count
-        Map<Path, String> lastAuthors = new HashMap<>();
+        Map<GitPath, Multiset<String>> fileAuthors = new HashMap<>(); //All authors of a file, with the respective edit count
+        Map<GitPath, String> lastAuthors = new HashMap<>();
         Multiset<String> totalAuthorCounts = HashMultiset.create(); //How many times each author changed any file. This is not the number of commits.
 
         commits.forEach(commit -> {

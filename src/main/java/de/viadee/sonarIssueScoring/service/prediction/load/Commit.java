@@ -1,6 +1,5 @@
 package de.viadee.sonarIssueScoring.service.prediction.load;
 
-import java.nio.file.Path;
 import java.time.DayOfWeek;
 import java.util.Map;
 import java.util.Objects;
@@ -25,8 +24,8 @@ public final class Commit {
     private final String authorEmail;
     private final double authorTime;
     private final DayOfWeek authorDay;
-    private final ImmutableMap<Path, DiffType> diffs;
-    private final ImmutableMap<Path, String> content;
+    private final ImmutableMap<GitPath, DiffType> diffs;
+    private final ImmutableMap<GitPath, String> content;
 
     public enum DiffType {
         ADDED,
@@ -34,7 +33,7 @@ public final class Commit {
         DELETED
     }
 
-    private Commit(String id, String message, String authorEmail, double authorTime, DayOfWeek authorDay, Map<Path, DiffType> diffs, Map<Path, String> content) {
+    private Commit(String id, String message, String authorEmail, double authorTime, DayOfWeek authorDay, Map<GitPath, DiffType> diffs, Map<GitPath, String> content) {
         this.id = Objects.requireNonNull(id, "id");
         this.message = Objects.requireNonNull(message, "message");
         this.authorEmail = Objects.requireNonNull(authorEmail, "authorEmail");
@@ -44,7 +43,7 @@ public final class Commit {
         this.content = ImmutableMap.copyOf(content);
     }
 
-    public static Commit of(String id, String message, String authorEmail, double authorTime, DayOfWeek authorDay, Map<Path, DiffType> diffs, Map<Path, String> content) {
+    public static Commit of(String id, String message, String authorEmail, double authorTime, DayOfWeek authorDay, Map<GitPath, DiffType> diffs, Map<GitPath, String> content) {
         return new Commit(id, message, authorEmail, authorTime, authorDay, diffs, content);
     }
 
@@ -71,14 +70,14 @@ public final class Commit {
         return authorDay;
     }
 
-    public ImmutableMap<Path, DiffType> diffs() {
+    public ImmutableMap<GitPath, DiffType> diffs() {
         return diffs;
     }
 
     /**
      * Current content of the complete repository
      */
-    public ImmutableMap<Path, String> content() {
+    public ImmutableMap<GitPath, String> content() {
         return content;
     }
 

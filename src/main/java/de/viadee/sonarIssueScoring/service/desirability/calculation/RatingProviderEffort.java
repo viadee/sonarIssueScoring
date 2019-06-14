@@ -5,12 +5,13 @@ import de.viadee.sonarIssueScoring.service.desirability.Rating;
 import de.viadee.sonarIssueScoring.service.desirability.RatingType;
 import de.viadee.sonarIssueScoring.service.desirability.UserPreferences;
 import de.viadee.sonarIssueScoring.service.prediction.PredictionResult;
+import de.viadee.sonarIssueScoring.service.prediction.load.GitPath;
+
 import org.apache.commons.math3.analysis.interpolation.LinearInterpolator;
 import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
 import org.sonarqube.ws.Issues.Issue;
 import org.springframework.stereotype.Component;
 
-import java.nio.file.Path;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -22,7 +23,7 @@ public class RatingProviderEffort implements RatingProvider {
     private static final PolynomialSplineFunction interpolator = new LinearInterpolator().interpolate(new double[]{0, 60, 120, 240}, new double[]{1.4, 1, 0.9, 0.8});
 
     @Override
-    public Rating createRating(Issue issue, PredictionResult predictionResult, Path realPath, UserPreferences userPreferences, Multiset<String> componentCounts) {
+    public Rating createRating(Issue issue, PredictionResult predictionResult, GitPath realPath, UserPreferences userPreferences, Multiset<String> componentCounts) {
         Matcher m = patternEffort.matcher(issue.getEffort());
         checkState(m.matches(), "Issue %s has non-conforming effort value: %s", issue, issue.getEffort());
 

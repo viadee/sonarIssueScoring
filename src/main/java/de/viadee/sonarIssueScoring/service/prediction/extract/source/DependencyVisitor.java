@@ -30,7 +30,7 @@ class DependencyVisitor extends ASTVisitor implements Metric {
     private final DependencyGraph graph;
     private String className;
 
-    public DependencyVisitor(DependencyGraph graph) {
+    DependencyVisitor(DependencyGraph graph) {
         this.graph = graph;
     }
 

@@ -5,8 +5,6 @@ import static org.eclipse.jgit.diff.DiffEntry.ChangeType;
 import static org.eclipse.jgit.diff.DiffEntry.scan;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
@@ -101,10 +99,10 @@ class CommitHistoryReader {
 
     /** Creates a Commit object (containing a diff to the previous commit). If the previous commit is null, an empty tree will be used instead */
     @VisibleForTesting Optional<Commit> createCommitWithDiff(Repository repo, RevCommit current, @Nullable RevCommit previous) throws IOException {
-        Map<Path, DiffType> diffs = createDiffMap(repo, current, previous);
+        Map<GitPath, DiffType> diffs = createDiffMap(repo, current, previous);
         if (diffs.isEmpty())
             return Optional.empty();  //We are using commit counts in the prediction, so ignore non-java commits entirely
-        Map<Path, String> snapshot = snapshotCreator.createSnapshot(repo, current);
+        Map<GitPath, String> snapshot = snapshotCreator.createSnapshot(repo, current);
 
         // https://stackoverflow.com/questions/11856983/why-git-authordate-is-different-from-commitdate
         // Committer time: Time the commit was last "modified", such as rebased
@@ -118,7 +116,7 @@ class CommitHistoryReader {
     }
 
     /** Creates a Commit object (containing a diff to the previous commit). If the previous commit is null, an empty tree will be used instead */
-    private Map<Path, DiffType> createDiffMap(Repository repo, RevCommit current, @Nullable RevCommit previous) throws IOException {
+    private Map<GitPath, DiffType> createDiffMap(Repository repo, RevCommit current, @Nullable RevCommit previous) throws IOException {
         try (TreeWalk treeWalk = new TreeWalk(repo)) {
             if (previous == null)
                 treeWalk.addTree(new EmptyTreeIterator());
@@ -130,15 +128,15 @@ class CommitHistoryReader {
 
             List<DiffEntry> diffEntries = scan(treeWalk);
 
-            Map<Path, DiffType> diffs = new HashMap<>();
+            Map<GitPath, DiffType> diffs = new HashMap<>();
 
             for (DiffEntry diff : diffEntries) {
                 if (diff.getChangeType() == ChangeType.ADD)
-                    diffs.put(Paths.get(diff.getNewPath()), ADDED);
+                    diffs.put(GitPath.of(diff.getNewPath()), ADDED);
                 else if (diff.getChangeType() == ChangeType.MODIFY)
-                    diffs.put(Paths.get(diff.getNewPath()), MODIFIED);
+                    diffs.put(GitPath.of(diff.getNewPath()), MODIFIED);
                 else if (diff.getChangeType() == ChangeType.DELETE)
-                    diffs.put(Paths.get(diff.getOldPath()), DELETED);
+                    diffs.put(GitPath.of(diff.getOldPath()), DELETED);
                 else
                     throw new RuntimeException("Unexpected diff type: " + diff);
             }

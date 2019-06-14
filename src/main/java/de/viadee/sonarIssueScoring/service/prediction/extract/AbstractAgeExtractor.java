@@ -1,6 +1,5 @@
 package de.viadee.sonarIssueScoring.service.prediction.extract;
 
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
@@ -11,6 +10,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.ListMultimap;
 
 import de.viadee.sonarIssueScoring.service.prediction.load.Commit;
+import de.viadee.sonarIssueScoring.service.prediction.load.GitPath;
 
 /**
  * Extracts the age of the n-th last change to file = how many commits ago was the n-th last change.
@@ -28,7 +28,7 @@ public abstract class AbstractAgeExtractor implements FeatureExtractor {
     private static final int MAX_INDEX_LENGTH = Arrays.stream(CommitAge.values()).mapToInt(ca -> ca.offset + 1).max().orElse(-1);
 
     @Override public void extractFeatures(List<Commit> commits, Output out) {
-        ListMultimap<Path, Integer> commitIndices = ArrayListMultimap.create(500, 4);
+        ListMultimap<GitPath, Integer> commitIndices = ArrayListMultimap.create(500, 4);
 
         for (int ci = 0; ci < commits.size(); ci++) {
             int commitIndex = ci;//Effectively final
@@ -51,20 +51,20 @@ public abstract class AbstractAgeExtractor implements FeatureExtractor {
         }
     }
 
-    protected abstract Path extractPath(Path input);
+    protected abstract GitPath extractPath(GitPath input);
 
     protected abstract String featureName(CommitAge age);
 
     @Component
     public static class ClassAgeExtractor extends AbstractAgeExtractor {
-        @Override protected Path extractPath(Path input) { return input;}
+        @Override protected GitPath extractPath(GitPath input) { return input;}
 
         @Override protected String featureName(CommitAge age) { return age.nameClass;}
     }
 
     @Component
     public static class PackageAgeExtractor extends AbstractAgeExtractor {
-        @Override protected Path extractPath(Path input) { return input.getParent();}
+        @Override protected GitPath extractPath(GitPath input) { return input.dir();}
 
         @Override protected String featureName(CommitAge age) { return age.namePackage;}
     }
@@ -84,7 +84,7 @@ public abstract class AbstractAgeExtractor implements FeatureExtractor {
 
         private final int offset;
         private final String nameClass = "commitAgeClass." + name();
-        private final String namePackage = "commitAgeClass." + name();
+        private final String namePackage = "commitAgePackage." + name();
 
         CommitAge(int offset) {
             this.offset = offset;

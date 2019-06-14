@@ -1,6 +1,5 @@
 package de.viadee.sonarIssueScoring.service.prediction;
 
-import java.nio.file.Path;
 import java.util.Objects;
 
 import javax.annotation.CheckReturnValue;
@@ -9,25 +8,27 @@ import javax.annotation.concurrent.Immutable;
 
 import com.google.common.base.MoreObjects;
 
+import de.viadee.sonarIssueScoring.service.prediction.load.GitPath;
+
 @ParametersAreNonnullByDefault
 @Immutable
 @CheckReturnValue
 public class EvaluationResultPath {
-    private final Path path;
+    private final GitPath path;
     private final double predicted;
     private final double actual;
 
-    private EvaluationResultPath(Path path, double predicted, double actual) {
+    private EvaluationResultPath(GitPath path, double predicted, double actual) {
         this.path = path;
         this.predicted = predicted;
         this.actual = actual;
     }
 
-    public static EvaluationResultPath of(Path path, double predicted, double actual) {
+    public static EvaluationResultPath of(GitPath path, double predicted, double actual) {
         return new EvaluationResultPath(path, predicted, actual);
     }
 
-    public Path path() { return path;}
+    public GitPath path() { return path;}
 
     public double predicted() { return predicted;}
 

@@ -1,6 +1,5 @@
 package de.viadee.sonarIssueScoring.service.desirability;
 
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
@@ -16,6 +15,8 @@ import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
+import de.viadee.sonarIssueScoring.service.prediction.load.GitPath;
+
 /**
  * User preferences for the calculation of the Desirability-Score
  */
@@ -27,12 +28,12 @@ public final class UserPreferences {
     private final ServerInfo sonarServer;
     private final String sonarProjectId;
     private final ImmutableMap<RatingType, Double> ratingWeights;
-    private final ImmutableMap<Path, Double> directoryScores;
+    private final ImmutableMap<GitPath, Double> directoryScores;
     private final int predictionHorizon;
     private final ServerInfo gitServer;
     private final String h2oUrl;
 
-    private UserPreferences(ServerInfo sonarServer, String sonarProjectId, Map<RatingType, Double> ratingWeights, Map<Path, Double> directoryScores,
+    private UserPreferences(ServerInfo sonarServer, String sonarProjectId, Map<RatingType, Double> ratingWeights, Map<GitPath, Double> directoryScores,
                             int predictionHorizon, ServerInfo gitServer, String h2oUrl) {
         this.sonarServer = Objects.requireNonNull(sonarServer, "sonarServer");
         this.sonarProjectId = Objects.requireNonNull(sonarProjectId, "sonarProjectId");
@@ -45,8 +46,7 @@ public final class UserPreferences {
 
     //Jackson deserializes null for missing maps
     @JsonCreator public static UserPreferences of(ServerInfo sonarServer, String sonarProjectId, @Nullable Map<RatingType, Double> ratingWeights,
-                                                  @Nullable @JsonDeserialize(keyUsing = PathKeyDeserializer.class) Map<Path, Double> directoryScores,
-                                                  int predictionHorizon, ServerInfo gitServer, String h2oUrl) {
+                                                  @Nullable Map<GitPath, Double> directoryScores, int predictionHorizon, ServerInfo gitServer, String h2oUrl) {
         return new UserPreferences(sonarServer, sonarProjectId, ratingWeights == null ? Collections.emptyMap() : ratingWeights,
                 directoryScores == null ? Collections.emptyMap() : directoryScores, predictionHorizon, gitServer, h2oUrl);
     }
@@ -75,7 +75,7 @@ public final class UserPreferences {
     /**
      * Additional scores / ratings for specific subdirectories - the most specific directory wins
      */
-    public ImmutableMap<Path, Double> directoryScores() {
+    public ImmutableMap<GitPath, Double> directoryScores() {
         return directoryScores;
     }
 

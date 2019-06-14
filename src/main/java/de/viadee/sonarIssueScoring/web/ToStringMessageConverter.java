@@ -24,7 +24,7 @@ public abstract class ToStringMessageConverter<T> extends AbstractHttpMessageCon
 
     @Override protected boolean supports(Class<?> clazz) { return supportedClass.isAssignableFrom(clazz); }
 
-    @Override protected T readInternal(Class<? extends T> aClass, HttpInputMessage httpInputMessage) throws IOException, HttpMessageNotReadableException {
+    @Override protected T readInternal(Class<? extends T> aClass, HttpInputMessage httpInputMessage) throws HttpMessageNotReadableException {
         throw new UnsupportedOperationException();
     }
 

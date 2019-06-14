@@ -1,6 +1,5 @@
 package de.viadee.sonarIssueScoring.service.prediction.extract;
 
-import java.nio.file.Path;
 import java.time.DayOfWeek;
 import java.util.HashMap;
 import java.util.List;
@@ -9,12 +8,13 @@ import java.util.Map;
 import org.springframework.stereotype.Component;
 
 import de.viadee.sonarIssueScoring.service.prediction.load.Commit;
+import de.viadee.sonarIssueScoring.service.prediction.load.GitPath;
 
 @Component
 public class CommitTimeExtractor implements FeatureExtractor {
-    public void extractFeatures(List<Commit> commits, Output out) {
-        Map<Path, Double> lastCommitTime = new HashMap<>();
-        Map<Path, DayOfWeek> lastCommitDay = new HashMap<>();
+    @Override public void extractFeatures(List<Commit> commits, Output out) {
+        Map<GitPath, Double> lastCommitTime = new HashMap<>();
+        Map<GitPath, DayOfWeek> lastCommitDay = new HashMap<>();
 
         commits.forEach(c -> {
             c.diffs().keySet().forEach(path -> {
