@@ -3,6 +3,7 @@ package de.viadee.sonarIssueScoring.service.prediction.load;
 import java.nio.file.Path;
 
 import javax.annotation.CheckReturnValue;
+import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import org.springframework.data.annotation.Immutable;
@@ -32,7 +33,7 @@ public class GitPath implements Comparable<GitPath> {
     @JsonCreator(mode = Mode.DELEGATING) private GitPath(String path) {
         this.path = trimmer.trimAndCollapseFrom(path.replace('\\', '/'), '/');
         this.filename = path.substring(path.lastIndexOf('/') + 1); // NotFound (-1) + 1 = 0
-        this.dir = path.substring(0, path.length() - filename.length());
+        this.dir = path.substring(0, Math.max(path.length() - filename.length() - 1, 0));
     }
 
     public static GitPath of(String path) {return new GitPath(path);}
@@ -43,7 +44,11 @@ public class GitPath implements Comparable<GitPath> {
 
     @JsonValue public String path() {return path;}
 
-    public GitPath dir() {return new GitPath(dir);}
+    @Nullable public GitPath dir() {
+        if (path.isEmpty())
+            return null;
+        return new GitPath(dir);
+    }
 
     public String fileName() {
         return filename;

@@ -45,9 +45,7 @@ public class PredictionService {
 
     /** Extract data and build a model for the past, and compare it with the more recent, not learned past to gauge prediction quality */
     public EvaluationResult evaluate(PredictionParams params, String h2oServer, boolean dumpData) throws IOException {
-        List<Commit> commits = repositoryLoader.loadSplitRepository(params);
-
-        MLInput mlInput = mlInputSource.createMLInput(commits, h2oServer, params.predictionHorizon(), Mode.Evaluate);
+        MLInput mlInput = mlInputSource.createMLInput(repositoryLoader.loadSplitRepository(params), h2oServer, params.predictionHorizon(), Mode.Evaluate);
 
         if (dumpData) {
             long time = System.currentTimeMillis();
