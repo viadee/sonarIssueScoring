@@ -51,8 +51,8 @@ public class PredictionService {
 
         if (dumpData) {
             long time = System.currentTimeMillis();
-            Files.write(Paths.get("training-" + time + ".csv"), csvConverter.toCSV(mlInput.trainingData()).data());
-            Files.write(Paths.get("prediction-" + time + ".csv"), csvConverter.toCSV(mlInput.predictionData()).data());
+            Files.write(Paths.get("data-" + time + "-train.csv"), csvConverter.toCSV(mlInput.trainingData()).data());
+            Files.write(Paths.get("data-" + time + "-predict.csv"), csvConverter.toCSV(mlInput.predictionData()).data());
         }
 
 
