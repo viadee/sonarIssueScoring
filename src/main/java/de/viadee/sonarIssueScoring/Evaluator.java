@@ -45,8 +45,11 @@ public class Evaluator implements ApplicationRunner {
 
             ServerInfo server = ServerInfo.of(repo, user, password);
 
+            String h2o = args.containsOption("h2o-server") ? args.getOptionValues("h2o-server").get(0) : "http://localhost:54321";
+
             log.info("Running evaluation for {} with horizon", predictionService); //Password is redacted automatically
-            EvaluationResult result = predictionService.evaluate(PredictionParams.of(server, horizon), "http://localhost:54321");
+
+            EvaluationResult result = predictionService.evaluate(PredictionParams.of(server, horizon), h2o);
             log.info("Evaluation result: \n{}", EvaluationResultPrinter.asString(result));
         }
     }
