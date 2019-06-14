@@ -1,5 +1,8 @@
 package de.viadee.sonarIssueScoring.service.prediction;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -15,6 +18,7 @@ import de.viadee.sonarIssueScoring.service.PredictionParams;
 import de.viadee.sonarIssueScoring.service.prediction.MlInputSource.Mode;
 import de.viadee.sonarIssueScoring.service.prediction.load.Commit;
 import de.viadee.sonarIssueScoring.service.prediction.load.RepositoryLoader;
+import de.viadee.sonarIssueScoring.service.prediction.train.CsvConverter;
 import de.viadee.sonarIssueScoring.service.prediction.train.MLInput;
 import de.viadee.sonarIssueScoring.service.prediction.train.MLService;
 
@@ -24,11 +28,13 @@ public class PredictionService {
     private final RepositoryLoader repositoryLoader;
     private final MlInputSource mlInputSource;
     private final MLService mlService;
+    private final CsvConverter csvConverter;
 
-    public PredictionService(RepositoryLoader repositoryLoader, MlInputSource mlInputSource, MLService mlService) {
+    public PredictionService(RepositoryLoader repositoryLoader, MlInputSource mlInputSource, MLService mlService, CsvConverter csvConverter) {
         this.repositoryLoader = repositoryLoader;
         this.mlInputSource = mlInputSource;
         this.mlService = mlService;
+        this.csvConverter = csvConverter;
     }
 
     public PredictionResult predict(PredictionParams params, String h2oServer) {
@@ -38,10 +44,18 @@ public class PredictionService {
     }
 
     /** Extract data and build a model for the past, and compare it with the more recent, not learned past to gauge prediction quality */
-    public EvaluationResult evaluate(PredictionParams params, String h2oServer) {
+    public EvaluationResult evaluate(PredictionParams params, String h2oServer, boolean dumpData) throws IOException {
         List<Commit> commits = repositoryLoader.loadSplitRepository(params);
 
         MLInput mlInput = mlInputSource.createMLInput(commits, h2oServer, params.predictionHorizon(), Mode.Evaluate);
+
+        if (dumpData) {
+            long time = System.currentTimeMillis();
+            Files.write(Paths.get("training-" + time + ".csv"), csvConverter.toCSV(mlInput.trainingData()).data());
+            Files.write(Paths.get("prediction-" + time + ".csv"), csvConverter.toCSV(mlInput.predictionData()).data());
+        }
+
+
         PredictionResult result = mlService.predict(mlInput);
 
         // Collect predicted vs actual future

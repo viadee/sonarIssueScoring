@@ -34,18 +34,18 @@ public abstract class AbstractAgeExtractor implements FeatureExtractor {
             int commitIndex = ci;//Effectively final
             Commit commit = commits.get(commitIndex);
 
-            commit.diffs().forEach((path, type) -> {
+            commit.diffs().keySet().stream().map(this::extractPath).distinct().forEach(path -> {
                 List<Integer> previousCommitIndices = commitIndices.get(path);
                 previousCommitIndices.add(0, commitIndex);
                 while (previousCommitIndices.size() > MAX_INDEX_LENGTH)
                     previousCommitIndices.remove(MAX_INDEX_LENGTH);
             });
 
-            commit.content().forEach((path, content) -> {
-                List<Integer> previousCommitIndices = commitIndices.get(path);
+            commit.content().keySet().forEach(path -> {
+                List<Integer> previousCommitIndices = commitIndices.get(extractPath(path));
                 for (CommitAge age : CommitAge.values()) {
                     Integer ageCommitIndex = Iterables.get(previousCommitIndices, age.offset, null);
-                    out.add(commit, path, featureName() + "." + age, ageCommitIndex == null ? commits.size() + 1 : commitIndex - ageCommitIndex);
+                    out.add(commit, path, featureName(age), ageCommitIndex == null ? commits.size() + 1 : commitIndex - ageCommitIndex);
                 }
             });
         }
@@ -53,20 +53,20 @@ public abstract class AbstractAgeExtractor implements FeatureExtractor {
 
     protected abstract Path extractPath(Path input);
 
-    protected abstract String featureName();
+    protected abstract String featureName(CommitAge age);
 
     @Component
     public static class ClassAgeExtractor extends AbstractAgeExtractor {
         @Override protected Path extractPath(Path input) { return input;}
 
-        @Override protected String featureName() { return "commitAgeClass";}
+        @Override protected String featureName(CommitAge age) { return age.nameClass;}
     }
 
     @Component
     public static class PackageAgeExtractor extends AbstractAgeExtractor {
         @Override protected Path extractPath(Path input) { return input.getParent();}
 
-        @Override protected String featureName() { return "commitAgePackage";}
+        @Override protected String featureName(CommitAge age) { return age.namePackage;}
     }
 
     /**
@@ -83,6 +83,8 @@ public abstract class AbstractAgeExtractor implements FeatureExtractor {
         Minus16(16);
 
         private final int offset;
+        private final String nameClass = "commitAgeClass." + name();
+        private final String namePackage = "commitAgeClass." + name();
 
         CommitAge(int offset) {
             this.offset = offset;

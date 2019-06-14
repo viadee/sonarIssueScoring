@@ -13,6 +13,8 @@ import com.google.common.collect.ImmutableMap;
 
 /**
  * Represents a single commit in a repository.
+ *
+ * Note: Object equality is solely based on commit id
  */
 @ParametersAreNonnullByDefault
 @Immutable
@@ -86,12 +88,11 @@ public final class Commit {
         if (o == null || getClass() != o.getClass())
             return false;
         Commit commit = (Commit) o;
-        return Double.compare(commit.authorTime, authorTime) == 0 && id.equals(commit.id) && message.equals(commit.message) && authorEmail.equals(
-                commit.authorEmail) && authorDay == commit.authorDay && diffs.equals(commit.diffs) && content.equals(commit.content);
+        return Objects.equals(id, commit.id);
     }
 
     @Override public int hashCode() {
-        return Objects.hash(id, message, authorEmail, authorTime, authorDay, diffs, content);
+        return Objects.hash(id);
     }
 
     @Override public String toString() {
