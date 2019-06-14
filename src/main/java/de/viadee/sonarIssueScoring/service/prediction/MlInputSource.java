@@ -4,6 +4,8 @@ import static com.google.common.base.Preconditions.*;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.ImmutableList;
@@ -21,6 +23,7 @@ import de.viadee.sonarIssueScoring.service.prediction.train.MLInput;
  */
 @Component
 public class MlInputSource {
+    private static final Logger log = LoggerFactory.getLogger(MlInputSource.class);
     private final List<FeatureExtractor> featureExtractors;
     private final TargetExtractor targetExtractor;
 
@@ -65,9 +68,13 @@ public class MlInputSource {
 
     private Multimap<Commit, Instance> createInstances(List<Commit> commits, int horizon) {
         Output out = new Output(commits);
-        featureExtractors.forEach(featureExtractor -> featureExtractor.extractFeatures(commits, out));
+        featureExtractors.forEach(featureExtractor -> {
+            log.info("Starting extraction: {}", featureExtractor.getClass().getSimpleName());
+            featureExtractor.extractFeatures(commits, out);
+        });
 
         for (int i = 0; i < commits.size() - horizon; i++) {
+            log.info("Starting extraction of target variable");
             targetExtractor.extractTargetVariable(commits.get(i), commits.subList(i + 1, i + horizon + 1), out);
             targetExtractor.extractTrainingHelpers(commits.get(i), out);
         }
