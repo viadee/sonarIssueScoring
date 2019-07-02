@@ -24,6 +24,7 @@ import de.viadee.sonarIssueScoring.service.prediction.train.Instance;
  * Extracts the prediction target variable out ot the repository
  */
 @Service
+@SuppressWarnings("squid:S2245") // Random numbers are safe here
 public class TargetExtractor {
 
     public void extractTrainingHelpers(Commit c, Output out) {
@@ -68,6 +69,9 @@ public class TargetExtractor {
         }
 
         @Override public double[] rank(double[] data) {
+            if (data.length == 0) //Can happen if a commit removes every java-file in the repository
+                return new double[0];
+
             double[] rank = super.rank(data);
             for (int i = 0; i < rank.length; i++)
                 rank[i] = (rank[i] - 1) / rank.length;

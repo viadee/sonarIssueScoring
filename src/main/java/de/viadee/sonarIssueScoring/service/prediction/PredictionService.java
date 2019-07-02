@@ -47,6 +47,9 @@ public class PredictionService {
     public EvaluationResult evaluate(PredictionParams params, String h2oServer, boolean dumpData) throws IOException {
         MLInput mlInput = mlInputSource.createMLInput(repositoryLoader.loadSplitRepository(params), h2oServer, params.predictionHorizon(), Mode.Evaluate);
 
+        //Try to get rid of the complete commit history
+        System.gc();
+
         if (dumpData) {
             long time = System.currentTimeMillis();
             Files.write(Paths.get("data-" + time + "-train.csv"), csvConverter.toCSV(mlInput.trainingData()).data());

@@ -31,7 +31,7 @@ class TempSourceFolder implements AutoCloseable {
     public void update(Map<GitPath, String> current) throws IOException {
         for (GitPath path : previous.keySet())
             if (!current.containsKey(path))
-                Files.delete(path.toActualPath(root));
+                Files.deleteIfExists(path.toActualPath(root)); //The file _should_ exist, but might not if there are two files only differing in capitalization on win systems
 
         for (Entry<GitPath, String> e : current.entrySet()) {
 

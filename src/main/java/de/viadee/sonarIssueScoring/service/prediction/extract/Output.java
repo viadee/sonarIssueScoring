@@ -1,5 +1,8 @@
 package de.viadee.sonarIssueScoring.service.prediction.extract;
 
+import static com.google.common.base.Preconditions.*;
+import static com.google.common.collect.ImmutableListMultimap.toImmutableListMultimap;
+
 import java.util.List;
 
 import com.google.common.collect.*;
@@ -14,7 +17,7 @@ import de.viadee.sonarIssueScoring.service.prediction.train.Instance;
  * Mutable class to accumulate features for a repository
  */
 public class Output {
-    private final Table<Commit, GitPath, Builder<String, Object>> data = HashBasedTable.create();
+    private Table<Commit, GitPath, Builder<String, Object>> data = HashBasedTable.create();
 
     public Output(List<Commit> commits) {
         commits.forEach(commit -> commit.content().keySet().forEach(path -> data.put(commit, path, ImmutableMap.builder())));
@@ -24,10 +27,19 @@ public class Output {
         data.get(c, p).put(name, val);
     }
 
+    /**
+     * Build the data. For RAM reasons, this can be done only once.
+     */
     public Multimap<Commit, Instance> build() {
-        return data.cellSet().stream().
-                collect(ImmutableListMultimap.toImmutableListMultimap(
-                        Cell::getRowKey,
-                        c -> Instance.of(c.getColumnKey(), c.getValue().build())));
+        checkNotNull(data, "Already built");
+
+        ImmutableListMultimap.Builder<Commit, Instance> ret = ImmutableListMultimap.builder();
+
+
+        Multimap<Commit, Instance> out = Streams.stream(Iterables.consumingIterable(data.cellSet())).collect(
+                toImmutableListMultimap(Cell::getRowKey, c -> Instance.of(c.getColumnKey(), c.getValue().build())));
+
+        data = null; //Mark the data as disposed and release the memory
+        return out;
     }
 }
