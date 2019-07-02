@@ -11,6 +11,18 @@ This tool incorporates a prediction of which files in a repository will change, 
 
 ## Getting started
 
+### Quality Evaluation
+
+Evaluate the quality of the repo prediction vs the actual future
+
+```bash
+curl -O http://h2o-release.s3.amazonaws.com/h2o/rel-yates/4/h2o-3.24.0.4.zip && unzip h2o-3.24.0.4.zip && cd h2o-3.24.0.4 && java -Xmx4G h2o.jar &
+git clone https://github.com/viadee/sonarIssueScoring.git && cd sonarIssueScoring
+mvn compile exec:java -Dexec.args="--evaluate --repo=https://github.com/viadee/sonarIssueScoring.git"
+```
+
+### Rest API
+
 Clone the repository, and execute `mvn compile exec:java` in a command line. Additionally, a running [H2O-Server](https://h2o.ai) (version [3.24.0.4](http://h2o-release.s3.amazonaws.com/h2o/latest_stable.html) or greater) is required. 
 
 This is all required setup for [SonarQuest](https://github.com/viadee/sonarQuest), alternatively the REST-API can be used directly: 
