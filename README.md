@@ -16,9 +16,9 @@ This tool incorporates a prediction of which files in a repository will change, 
 Evaluate the quality of the repo prediction vs the actual future
 
 ```bash
-curl -O http://h2o-release.s3.amazonaws.com/h2o/rel-yates/4/h2o-3.24.0.4.zip && unzip h2o-3.24.0.4.zip && cd h2o-3.24.0.4 && java -Xmx4G h2o.jar &
+curl -O http://h2o-release.s3.amazonaws.com/h2o/rel-yates/4/h2o-3.24.0.4.zip && unzip h2o-3.24.0.4.zip && cd h2o-3.24.0.4 && java -Xmx4G -jar h2o.jar &
 git clone https://github.com/viadee/sonarIssueScoring.git && cd sonarIssueScoring
-mvn compile exec:java -Dexec.args="--evaluate --repo=https://github.com/viadee/sonarIssueScoring.git"
+mvn compile exec:java -Dexec.args="--evaluate --repo=https://github.com/apache/commons-lang.git"
 ```
 
 ### Rest API
