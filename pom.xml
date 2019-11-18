@@ -103,7 +103,7 @@
         <dependency>
             <groupId>ai.h2o</groupId>
             <artifactId>h2o-bindings</artifactId>
-            <version>3.24.0.4</version>
+            <version>3.26.0.10</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
