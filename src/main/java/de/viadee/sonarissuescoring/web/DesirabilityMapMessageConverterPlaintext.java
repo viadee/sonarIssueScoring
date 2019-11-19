@@ -6,17 +6,18 @@ import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Maps;
 
+import de.viadee.sonarissuescoring.service.desirability.DesirabilityResult;
 import de.viadee.sonarissuescoring.service.desirability.IssueDesirability;
 
 @Component
-public class DesirabilityMapMessageConverterPlaintext extends ToStringMessageConverter<Map<String, IssueDesirability>> {
+public class DesirabilityMapMessageConverterPlaintext extends ToStringMessageConverter<DesirabilityResult> {
 
     public DesirabilityMapMessageConverterPlaintext() {
-        super(Map.class);
+        super(DesirabilityResult.class);
     }
 
-    @Override protected String write(Map<String, IssueDesirability> res) {
-        Map<String, Double> scoreMap = Maps.transformValues(res, IssueDesirability::desirabilityScore);
+    @Override protected String write(DesirabilityResult src) {
+        Map<String, Double> scoreMap = Maps.transformValues(src.desirabilities(), IssueDesirability::desirabilityScore);
 
         return StringTableFormatter.formatData("Issue Desirability", "Issue", "Desirability Score", scoreMap, true);
     }

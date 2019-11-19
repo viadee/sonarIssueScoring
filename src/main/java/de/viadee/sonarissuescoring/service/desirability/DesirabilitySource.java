@@ -1,7 +1,6 @@
 package de.viadee.sonarissuescoring.service.desirability;
 
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.sonarqube.ws.Issues.Issue;
@@ -32,7 +31,7 @@ public class DesirabilitySource {
         this.predictionService = predictionService;
     }
 
-    public Map<String, IssueDesirability> calculateIssueDesirability(UserPreferences userPreferences) {
+    public DesirabilityResult calculateIssueDesirability(UserPreferences userPreferences) {
         List<Issue> issues = sonarIssueSource.findAll(userPreferences.sonarServer(), userPreferences.sonarProjectId());
 
         PredictionResult prediction = predictionService.predict(PredictionParams.of(userPreferences.gitServer(), userPreferences.predictionHorizon()),
@@ -43,8 +42,8 @@ public class DesirabilitySource {
 
         ImmutableMultiset<String> componentCounts = issues.stream().map(Issue::getComponent).collect(ImmutableMultiset.toImmutableMultiset());
 
-        return issues.stream().collect(
-                Collectors.toMap(Issue::getKey, issue -> createDesirabilityInformation(issue, realPathLookup, prediction, userPreferences, componentCounts)));
+        return new DesirabilityResult(issues.stream().collect(
+                Collectors.toMap(Issue::getKey, issue -> createDesirabilityInformation(issue, realPathLookup, prediction, userPreferences, componentCounts))));
     }
 
     private IssueDesirability createDesirabilityInformation(Issue issue, PathSuffixLookup<GitPath> realPathLookup, PredictionResult prediction,
