@@ -5,8 +5,7 @@ cache:
 addons:
   sonarcloud:
     organization: "viadee"
-    token:
-      secure: $SONAR_TOKEN
+    token: $SONAR_TOKEN
 script:
     # the following command line builds the project, runs the tests with coverage and then executes the SonarCloud analysis
   - mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar
